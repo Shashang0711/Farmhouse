@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  USER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role     @default(USER)
+  farms     Farm[]   @relation("UserFarms")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Farm {
+  id           String        @id @default(uuid())
+  name         String
+  location     String?
+  description  String?
+  ownerId      String
+  owner        User          @relation("UserFarms", fields: [ownerId], references: [id])
+  photos       Photography[]
+  decorations  Decoration[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Photography {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String?
+  farmId      String
+  farm        Farm     @relation(fields: [farmId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Decoration {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Float?
+  farmId      String
+  farm        Farm     @relation(fields: [farmId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
