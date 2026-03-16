@@ -11,7 +11,13 @@ const links = [
   { href: '/decorations', label: 'Decorations' }
 ];
 
-export function Sidebar() {
+export function Sidebar({
+  mobileOpen,
+  onNavigate
+}: {
+  mobileOpen?: boolean;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuth();
@@ -22,7 +28,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="sidebar">
+    <aside className={mobileOpen ? 'sidebar sidebar--open' : 'sidebar'}>
       <div className="sidebar-header">
         <span className="brand">Farmhouse Admin</span>
       </div>
@@ -33,6 +39,7 @@ export function Sidebar() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => onNavigate?.()}
                 className={
                   pathname === link.href || pathname.startsWith(link.href + '/')
                     ? 'sidebar-link active'

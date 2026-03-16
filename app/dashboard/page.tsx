@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../lib/auth-context";
 import { apiGet } from "../lib/backend-api";
 
-type Farm = { id: string };
+type Farm = { id: string; isPopular?: boolean; rating?: number | null };
 type User = { id: string };
 type Decoration = { id: string };
 
@@ -16,6 +16,8 @@ export default function DashboardPage() {
   const [farmCount, setFarmCount] = useState<number | null>(null);
   const [userCount, setUserCount] = useState<number | null>(null);
   const [decorationCount, setDecorationCount] = useState<number | null>(null);
+  const [popularFarmCount, setPopularFarmCount] = useState<number | null>(null);
+  const [highRatedCount, setHighRatedCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,6 +44,8 @@ export default function DashboardPage() {
         setFarmCount(farms.length);
         setUserCount(users.length);
         setDecorationCount(decorations.length);
+        setPopularFarmCount(farms.filter((f) => f.isPopular).length);
+        setHighRatedCount(farms.filter((f) => (f.rating ?? 0) >= 4.5).length);
       } catch (err: any) {
         setError(err?.message ?? "Failed to load analytics");
       }
@@ -73,6 +77,44 @@ export default function DashboardPage() {
           <div className="stat-value">
             {decorationCount !== null ? decorationCount : "—"}
           </div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Popular Farms</div>
+          <div className="stat-value">
+            {popularFarmCount !== null ? popularFarmCount : "—"}
+          </div>
+          {farmCount !== null && popularFarmCount !== null && farmCount > 0 && (
+            <div className="bar-row">
+              <div
+                className="bar-fill"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.round((popularFarmCount / farmCount) * 100)
+                  )}%`
+                }}
+              />
+            </div>
+          )}
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Rating ≥ 4.5</div>
+          <div className="stat-value">
+            {highRatedCount !== null ? highRatedCount : "—"}
+          </div>
+          {farmCount !== null && highRatedCount !== null && farmCount > 0 && (
+            <div className="bar-row">
+              <div
+                className="bar-fill bar-fill--secondary"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.round((highRatedCount / farmCount) * 100)
+                  )}%`
+                }}
+              />
+            </div>
+          )}
         </div>
       </section>
     </div>
