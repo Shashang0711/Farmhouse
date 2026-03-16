@@ -7,7 +7,6 @@ import { apiGet } from "../lib/backend-api";
 
 type Farm = { id: string };
 type User = { id: string };
-type Photo = { id: string };
 type Decoration = { id: string };
 
 export default function DashboardPage() {
@@ -16,7 +15,6 @@ export default function DashboardPage() {
 
   const [farmCount, setFarmCount] = useState<number | null>(null);
   const [userCount, setUserCount] = useState<number | null>(null);
-  const [photoCount, setPhotoCount] = useState<number | null>(null);
   const [decorationCount, setDecorationCount] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,18 +25,22 @@ export default function DashboardPage() {
   }, [user, loading, router]);
 
   useEffect(() => {
+    if (!loading && user && user.role !== "ADMIN") {
+      router.replace("/farms");
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
     const load = async () => {
       if (!token) return;
       try {
-        const [farms, users, photos, decorations] = await Promise.all([
+        const [farms, users, decorations] = await Promise.all([
           apiGet<Farm[]>("/farms", token),
           apiGet<User[]>("/users", token),
-          apiGet<Photo[]>("/photography", token),
           apiGet<Decoration[]>("/decorations", token)
         ]);
         setFarmCount(farms.length);
         setUserCount(users.length);
-        setPhotoCount(photos.length);
         setDecorationCount(decorations.length);
       } catch (err: any) {
         setError(err?.message ?? "Failed to load analytics");
@@ -47,7 +49,7 @@ export default function DashboardPage() {
     void load();
   }, [token]);
 
-  if (!user) return null;
+  if (!user || user.role !== "ADMIN") return null;
 
   return (
     <div className="page">
@@ -64,12 +66,6 @@ export default function DashboardPage() {
           <div className="stat-label">Total Users</div>
           <div className="stat-value">
             {userCount !== null ? userCount : "—"}
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Total Photos</div>
-          <div className="stat-value">
-            {photoCount !== null ? photoCount : "—"}
           </div>
         </div>
         <div className="stat-card">

@@ -8,7 +8,6 @@ datasource db {
 }
 
 enum Role {
-  OWNER
   ADMIN
   USER
 }
@@ -29,6 +28,22 @@ model Farm {
   name         String
   location     String?
   description  String?
+  price        String?
+  originalPrice String?
+  rating       Float?
+  reviews      Int?
+  capacity     String?
+  features     String[]
+  amenities    String[]
+  facilities   String[]
+  pricing      Json?
+  rules        String[]
+  contactPhone String?
+  contactEmail String?
+  isPopular    Boolean       @default(false)
+  discount     String?
+  weekdayPrice String?
+  weekendPrice String?
   ownerId      String
   owner        User          @relation("UserFarms", fields: [ownerId], references: [id])
   photos       Photography[]

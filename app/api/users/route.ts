@@ -6,7 +6,7 @@ import { requireRole } from '../_lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
-    requireRole(req, [Role.OWNER, Role.ADMIN]);
+    requireRole(req, [Role.ADMIN]);
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   let creator;
   try {
-    creator = requireRole(req, [Role.OWNER, Role.ADMIN]);
+    creator = requireRole(req, [Role.ADMIN]);
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
@@ -33,10 +33,10 @@ export async function POST(req: NextRequest) {
     email?: string;
     name?: string;
     password?: string;
-    role?: Role;
+    role?: string;
   };
 
-  if (!body.email || !body.name || !body.password || !body.role) {
+  if (!body.email || !body.name || !body.password) {
     return NextResponse.json(
       { message: 'email, name, password and role are required' },
       { status: 400 }
@@ -55,12 +55,18 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await bcrypt.hash(body.password, 10);
 
+  const roleUpper = body.role?.toUpperCase();
+  const normalizedRole: Role =
+    roleUpper === 'ADMIN'
+      ? Role.ADMIN
+      : Role.USER;
+
   const user = await prisma.user.create({
     data: {
       email: body.email,
       name: body.name,
       password: passwordHash,
-      role: body.role
+      role: normalizedRole
     }
   });
 

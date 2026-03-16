@@ -4,35 +4,35 @@ import { PrismaClient, Role } from '@prisma/client';
 const prisma = new PrismaClient();
 
 async function main() {
-  const email = 'owner@farmhouse.local';
-  const password = 'owner123';
+  const email = 'admin@farmhouse.local';
+  const password = 'admin123';
 
-  // Seed Owner user
-  let owner = await prisma.user.findUnique({ where: { email } });
-  if (!owner) {
+  // Seed Admin user
+  let admin = await prisma.user.findUnique({ where: { email } });
+  if (!admin) {
     const hashed = await bcrypt.hash(password, 10);
-    owner = await prisma.user.create({
+    admin = await prisma.user.create({
       data: {
         email,
-        name: 'Default Owner',
+        name: 'Default Admin',
         password: hashed,
-        role: Role.OWNER
+        role: Role.ADMIN
       }
     });
-    console.log('Seeded owner:', email, 'password:', password);
+    console.log('Seeded admin:', email, 'password:', password);
   } else {
-    console.log('Owner already exists, skipping user seed');
+    console.log('Admin already exists, skipping user seed');
   }
 
   // Seed one example farm for that owner
-  const farms = await prisma.farm.findMany({ where: { ownerId: owner.id } });
+  const farms = await prisma.farm.findMany({ where: { ownerId: admin.id } });
   if (farms.length === 0) {
     const farm = await prisma.farm.create({
       data: {
         name: 'Green Valley Farm',
         location: 'Near City',
         description: 'Sample seeded farm',
-        ownerId: owner.id
+        ownerId: admin.id
       }
     });
     console.log('Seeded farm:', farm.name);

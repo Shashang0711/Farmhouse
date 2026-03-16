@@ -8,7 +8,7 @@ type Params = { params: { id: string } };
 
 export async function GET(req: NextRequest, { params }: Params) {
   try {
-    requireRole(req, [Role.OWNER, Role.ADMIN]);
+    requireRole(req, [Role.ADMIN]);
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
-    requireRole(req, [Role.OWNER, Role.ADMIN]);
+    requireRole(req, [Role.ADMIN]);
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
@@ -36,12 +36,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const body = (await req.json()) as {
     name?: string;
     password?: string;
-    role?: Role;
+    role?: string;
   };
 
   const data: any = {};
   if (body.name !== undefined) data.name = body.name;
-  if (body.role !== undefined) data.role = body.role;
+  if (body.role !== undefined) {
+    const roleUpper = body.role.toUpperCase();
+    data.role = roleUpper === 'ADMIN' ? Role.ADMIN : Role.USER;
+  }
   if (body.password !== undefined) {
     data.password = await bcrypt.hash(body.password, 10);
   }
@@ -56,7 +59,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
-    requireRole(req, [Role.OWNER, Role.ADMIN]);
+    requireRole(req, [Role.ADMIN]);
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },

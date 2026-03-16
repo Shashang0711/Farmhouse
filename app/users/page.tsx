@@ -19,13 +19,18 @@ export default function UsersPage() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("User");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!loading && user && user.role !== "ADMIN") {
+      router.replace("/farms");
     }
   }, [user, loading, router]);
 
@@ -54,13 +59,11 @@ export default function UsersPage() {
       await apiPost<User>("/users", token, {
         email,
         name,
-        password,
-        role
+        password
       });
       setEmail("");
       setName("");
       setPassword("");
-      setRole("User");
       await loadUsers();
     } catch (err: any) {
       setError(err?.message ?? "Failed to create user");
@@ -69,7 +72,7 @@ export default function UsersPage() {
     }
   };
 
-  if (!user) {
+  if (!user || user.role !== "ADMIN") {
     return null;
   }
 
@@ -104,18 +107,6 @@ export default function UsersPage() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-          </label>
-          <label>
-            <span>Role</span>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              required
-            >
-              <option value="Owner">Owner</option>
-              <option value="Admin">Admin</option>
-              <option value="User">User</option>
-            </select>
           </label>
           {error && <p className="error">{error}</p>}
           <button type="submit" disabled={submitting}>

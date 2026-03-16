@@ -29,6 +29,12 @@ export default function DecorationsPage() {
     }
   }, [user, loading, router]);
 
+  useEffect(() => {
+    if (!loading && user && user.role !== "ADMIN") {
+      router.replace("/farms");
+    }
+  }, [user, loading, router]);
+
   const loadDecorations = async () => {
     if (!token) return;
     try {
@@ -69,7 +75,7 @@ export default function DecorationsPage() {
     }
   };
 
-  if (!user) {
+  if (!user || user.role !== "ADMIN") {
     return null;
   }
 

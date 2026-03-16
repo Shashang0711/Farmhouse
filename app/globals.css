@@ -12,7 +12,7 @@ body {
 }
 
 .app-shell {
-  min-height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: row;
 }
@@ -27,6 +27,8 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .page h1 {
@@ -88,6 +90,26 @@ body {
   display: flex;
   justify-content: flex-start;
   gap: 0.5rem;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.row-actions button {
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.row-actions button:hover {
+  background: #f3f4f6;
 }
 
 input,
@@ -182,6 +204,7 @@ th {
   display: flex;
   flex-direction: column;
   padding: 1rem;
+  height: 100vh;
 }
 
 .sidebar-header {

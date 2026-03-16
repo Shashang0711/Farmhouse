@@ -45,6 +45,21 @@ export async function apiPost<T>(
   return handleResponse<T>(res);
 }
 
+export async function apiPostForm<T>(
+  path: string,
+  token: string | null,
+  formData: FormData
+) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: formData
+  });
+  return handleResponse<T>(res);
+}
+
 export async function apiPatch<T>(
   path: string,
   token: string | null,

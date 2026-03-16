@@ -26,7 +26,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
 export async function PATCH(req: NextRequest, { params }: Params) {
   try {
-    requireRole(req, [Role.OWNER, Role.ADMIN]);
+    requireRole(req, [Role.ADMIN]);
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
@@ -54,7 +54,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
 export async function DELETE(req: NextRequest, { params }: Params) {
   try {
-    requireRole(req, [Role.OWNER, Role.ADMIN]);
+    requireRole(req, [Role.ADMIN]);
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
