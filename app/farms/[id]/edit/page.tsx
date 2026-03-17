@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../../lib/auth-context";
-import { apiGet, apiPatch } from "../../../lib/backend-api";
+import { FormEvent, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../../lib/auth-context';
+import { apiGet, apiPatch } from '../../../lib/backend-api';
 
 type FarmDetail = {
   id: string;
@@ -39,34 +39,34 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
 
-  const [name, setName] = useState("");
-  const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-  const [rating, setRating] = useState("");
-  const [reviews, setReviews] = useState("");
-  const [capacity, setCapacity] = useState("");
-  const [featuresText, setFeaturesText] = useState("");
-  const [amenitiesText, setAmenitiesText] = useState("");
-  const [facilitiesText, setFacilitiesText] = useState("");
-  const [rulesText, setRulesText] = useState("");
-  const [weekdayPrice, setWeekdayPrice] = useState("");
-  const [weekendPrice, setWeekendPrice] = useState("");
-  const [contactPhone, setContactPhone] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
-  const [discount, setDiscount] = useState("");
+  const [name, setName] = useState('');
+  const [location, setLocation] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [originalPrice, setOriginalPrice] = useState('');
+  const [rating, setRating] = useState('');
+  const [reviews, setReviews] = useState('');
+  const [capacity, setCapacity] = useState('');
+  const [featuresText, setFeaturesText] = useState('');
+  const [amenitiesText, setAmenitiesText] = useState('');
+  const [facilitiesText, setFacilitiesText] = useState('');
+  const [rulesText, setRulesText] = useState('');
+  const [weekdayPrice, setWeekdayPrice] = useState('');
+  const [weekendPrice, setWeekendPrice] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [discount, setDiscount] = useState('');
   const [isPopular, setIsPopular] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      router.replace('/login');
     }
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!loading && user && user.role !== "ADMIN") {
-      router.replace("/farms");
+    if (!loading && user && user.role !== 'ADMIN') {
+      router.replace('/farms');
     }
   }, [user, loading, router]);
 
@@ -76,30 +76,26 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
       setLoadingFarm(true);
       try {
         const data = await apiGet<FarmDetail>(`/farms/${params.id}`, token);
-        setName(data.name ?? "");
-        setLocation(data.location ?? "");
-        setDescription(data.description ?? "");
-        setPrice(data.price ?? "");
-        setOriginalPrice(data.originalPrice ?? "");
-        setRating(
-          data.rating !== undefined && data.rating !== null ? String(data.rating) : ""
-        );
-        setReviews(
-          data.reviews !== undefined && data.reviews !== null ? String(data.reviews) : ""
-        );
-        setCapacity(data.capacity ?? "");
-        setFeaturesText((data.features ?? []).join("\n"));
-        setAmenitiesText((data.amenities ?? []).join("\n"));
-        setFacilitiesText((data.facilities ?? []).join("\n"));
-        setRulesText((data.rules ?? []).join("\n"));
-        setWeekdayPrice(data.weekdayPrice ?? "");
-        setWeekendPrice(data.weekendPrice ?? "");
-        setContactPhone(data.contactPhone ?? "");
-        setContactEmail(data.contactEmail ?? "");
-        setDiscount(data.discount ?? "");
+        setName(data.name ?? '');
+        setLocation(data.location ?? '');
+        setDescription(data.description ?? '');
+        setPrice(data.price ?? '');
+        setOriginalPrice(data.originalPrice ?? '');
+        setRating(data.rating !== undefined && data.rating !== null ? String(data.rating) : '');
+        setReviews(data.reviews !== undefined && data.reviews !== null ? String(data.reviews) : '');
+        setCapacity(data.capacity ?? '');
+        setFeaturesText((data.features ?? []).join('\n'));
+        setAmenitiesText((data.amenities ?? []).join('\n'));
+        setFacilitiesText((data.facilities ?? []).join('\n'));
+        setRulesText((data.rules ?? []).join('\n'));
+        setWeekdayPrice(data.weekdayPrice ?? '');
+        setWeekendPrice(data.weekendPrice ?? '');
+        setContactPhone(data.contactPhone ?? '');
+        setContactEmail(data.contactEmail ?? '');
+        setDiscount(data.discount ?? '');
         setIsPopular(Boolean(data.isPopular));
       } catch (err: any) {
-        setFormError(err?.message ?? "Failed to load farm");
+        setFormError(err?.message ?? 'Failed to load farm');
       } finally {
         setLoadingFarm(false);
       }
@@ -107,24 +103,24 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
     void load();
   }, [token, params.id]);
 
-  if (!user || user.role !== "ADMIN") return null;
+  if (!user || user.role !== 'ADMIN') return null;
 
   const validate = () => {
     const errs: FieldErrors = {};
-    if (!name.trim()) errs.name = "Name is required.";
-    if (!location.trim()) errs.location = "Location is required.";
-    if (!description.trim()) errs.description = "Description is required.";
-    if (!price.trim()) errs.price = "Display price is required.";
-    if (!originalPrice.trim()) errs.originalPrice = "Original price is required.";
-    if (!capacity.trim()) errs.capacity = "Capacity is required.";
-    if (!featuresText.trim()) errs.featuresText = "At least one feature is required.";
-    if (!amenitiesText.trim()) errs.amenitiesText = "At least one amenity is required.";
-    if (!facilitiesText.trim()) errs.facilitiesText = "Facilities are required.";
-    if (!rulesText.trim()) errs.rulesText = "Rules are required.";
-    if (!weekdayPrice.trim()) errs.weekdayPrice = "Weekday 24h price is required.";
-    if (!weekendPrice.trim()) errs.weekendPrice = "Weekend 24h price is required.";
-    if (!contactPhone.trim()) errs.contactPhone = "Contact phone is required.";
-    if (!contactEmail.trim()) errs.contactEmail = "Contact email is required.";
+    if (!name.trim()) errs.name = 'Name is required.';
+    if (!location.trim()) errs.location = 'Location is required.';
+    if (!description.trim()) errs.description = 'Description is required.';
+    if (!price.trim()) errs.price = 'Display price is required.';
+    if (!originalPrice.trim()) errs.originalPrice = 'Original price is required.';
+    if (!capacity.trim()) errs.capacity = 'Capacity is required.';
+    if (!featuresText.trim()) errs.featuresText = 'At least one feature is required.';
+    if (!amenitiesText.trim()) errs.amenitiesText = 'At least one amenity is required.';
+    if (!facilitiesText.trim()) errs.facilitiesText = 'Facilities are required.';
+    if (!rulesText.trim()) errs.rulesText = 'Rules are required.';
+    if (!weekdayPrice.trim()) errs.weekdayPrice = 'Weekday 24h price is required.';
+    if (!weekendPrice.trim()) errs.weekendPrice = 'Weekend 24h price is required.';
+    if (!contactPhone.trim()) errs.contactPhone = 'Contact phone is required.';
+    if (!contactEmail.trim()) errs.contactEmail = 'Contact email is required.';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -135,7 +131,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
     setFormError(null);
 
     if (!validate()) {
-      setFormError("Please fill all required fields highlighted in red.");
+      setFormError('Please fill all required fields highlighted in red.');
       return;
     }
 
@@ -161,8 +157,8 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
       const pricing =
         weekdayPrice || weekendPrice
           ? {
-              weekday: weekdayPrice ? { "24 Hours": weekdayPrice } : {},
-              weekend: weekendPrice ? { "24 Hours": weekendPrice } : {}
+              weekday: weekdayPrice ? { '24 Hours': weekdayPrice } : {},
+              weekend: weekendPrice ? { '24 Hours': weekendPrice } : {},
             }
           : undefined;
 
@@ -185,12 +181,12 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
         isPopular,
         discount: discount.trim() || null,
         weekdayPrice: weekdayPrice.trim(),
-        weekendPrice: weekendPrice.trim()
+        weekendPrice: weekendPrice.trim(),
       });
 
-      router.push("/farms");
+      router.push('/farms');
     } catch (err: any) {
-      setFormError(err?.message ?? "Failed to update farm");
+      setFormError(err?.message ?? 'Failed to update farm');
     } finally {
       setSubmitting(false);
     }
@@ -205,7 +201,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
         <button
           type="button"
           className="primary-ghost-button"
-          onClick={() => router.push("/farms")}
+          onClick={() => router.push('/farms')}
         >
           Back to list
         </button>
@@ -224,9 +220,9 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className={err("name") ? "field-error" : ""}
+                className={err('name') ? 'field-error' : ''}
               />
-              {err("name") && <span className="field-error-text">{err("name")}</span>}
+              {err('name') && <span className="field-error-text">{err('name')}</span>}
             </label>
             <label>
               <span className="field-label">
@@ -235,11 +231,9 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
               <input
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className={err("location") ? "field-error" : ""}
+                className={err('location') ? 'field-error' : ''}
               />
-              {err("location") && (
-                <span className="field-error-text">{err("location")}</span>
-              )}
+              {err('location') && <span className="field-error-text">{err('location')}</span>}
             </label>
             <label>
               <span className="field-label">
@@ -249,11 +243,9 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className={err("description") ? "field-error" : ""}
+                className={err('description') ? 'field-error' : ''}
               />
-              {err("description") && (
-                <span className="field-error-text">{err("description")}</span>
-              )}
+              {err('description') && <span className="field-error-text">{err('description')}</span>}
             </label>
             <label>
               <span className="field-label">
@@ -262,9 +254,9 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
               <input
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className={err("price") ? "field-error" : ""}
+                className={err('price') ? 'field-error' : ''}
               />
-              {err("price") && <span className="field-error-text">{err("price")}</span>}
+              {err('price') && <span className="field-error-text">{err('price')}</span>}
             </label>
             <label>
               <span className="field-label">
@@ -273,10 +265,10 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
               <input
                 value={originalPrice}
                 onChange={(e) => setOriginalPrice(e.target.value)}
-                className={err("originalPrice") ? "field-error" : ""}
+                className={err('originalPrice') ? 'field-error' : ''}
               />
-              {err("originalPrice") && (
-                <span className="field-error-text">{err("originalPrice")}</span>
+              {err('originalPrice') && (
+                <span className="field-error-text">{err('originalPrice')}</span>
               )}
             </label>
             <label>
@@ -306,11 +298,9 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
               <input
                 value={capacity}
                 onChange={(e) => setCapacity(e.target.value)}
-                className={err("capacity") ? "field-error" : ""}
+                className={err('capacity') ? 'field-error' : ''}
               />
-              {err("capacity") && (
-                <span className="field-error-text">{err("capacity")}</span>
-              )}
+              {err('capacity') && <span className="field-error-text">{err('capacity')}</span>}
             </label>
             <label className="full-width">
               <span className="field-label">
@@ -320,10 +310,10 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
                 rows={2}
                 value={featuresText}
                 onChange={(e) => setFeaturesText(e.target.value)}
-                className={err("featuresText") ? "field-error" : ""}
+                className={err('featuresText') ? 'field-error' : ''}
               />
-              {err("featuresText") && (
-                <span className="field-error-text">{err("featuresText")}</span>
+              {err('featuresText') && (
+                <span className="field-error-text">{err('featuresText')}</span>
               )}
             </label>
             <label className="full-width">
@@ -334,10 +324,10 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
                 rows={2}
                 value={amenitiesText}
                 onChange={(e) => setAmenitiesText(e.target.value)}
-                className={err("amenitiesText") ? "field-error" : ""}
+                className={err('amenitiesText') ? 'field-error' : ''}
               />
-              {err("amenitiesText") && (
-                <span className="field-error-text">{err("amenitiesText")}</span>
+              {err('amenitiesText') && (
+                <span className="field-error-text">{err('amenitiesText')}</span>
               )}
             </label>
             <label className="full-width">
@@ -348,10 +338,10 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
                 rows={3}
                 value={facilitiesText}
                 onChange={(e) => setFacilitiesText(e.target.value)}
-                className={err("facilitiesText") ? "field-error" : ""}
+                className={err('facilitiesText') ? 'field-error' : ''}
               />
-              {err("facilitiesText") && (
-                <span className="field-error-text">{err("facilitiesText")}</span>
+              {err('facilitiesText') && (
+                <span className="field-error-text">{err('facilitiesText')}</span>
               )}
             </label>
             <label className="full-width">
@@ -362,11 +352,9 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
                 rows={3}
                 value={rulesText}
                 onChange={(e) => setRulesText(e.target.value)}
-                className={err("rulesText") ? "field-error" : ""}
+                className={err('rulesText') ? 'field-error' : ''}
               />
-              {err("rulesText") && (
-                <span className="field-error-text">{err("rulesText")}</span>
-              )}
+              {err('rulesText') && <span className="field-error-text">{err('rulesText')}</span>}
             </label>
             <label>
               <span className="field-label">
@@ -375,10 +363,10 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
               <input
                 value={weekdayPrice}
                 onChange={(e) => setWeekdayPrice(e.target.value)}
-                className={err("weekdayPrice") ? "field-error" : ""}
+                className={err('weekdayPrice') ? 'field-error' : ''}
               />
-              {err("weekdayPrice") && (
-                <span className="field-error-text">{err("weekdayPrice")}</span>
+              {err('weekdayPrice') && (
+                <span className="field-error-text">{err('weekdayPrice')}</span>
               )}
             </label>
             <label>
@@ -388,10 +376,10 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
               <input
                 value={weekendPrice}
                 onChange={(e) => setWeekendPrice(e.target.value)}
-                className={err("weekendPrice") ? "field-error" : ""}
+                className={err('weekendPrice') ? 'field-error' : ''}
               />
-              {err("weekendPrice") && (
-                <span className="field-error-text">{err("weekendPrice")}</span>
+              {err('weekendPrice') && (
+                <span className="field-error-text">{err('weekendPrice')}</span>
               )}
             </label>
             <label>
@@ -401,10 +389,10 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
               <input
                 value={contactPhone}
                 onChange={(e) => setContactPhone(e.target.value)}
-                className={err("contactPhone") ? "field-error" : ""}
+                className={err('contactPhone') ? 'field-error' : ''}
               />
-              {err("contactPhone") && (
-                <span className="field-error-text">{err("contactPhone")}</span>
+              {err('contactPhone') && (
+                <span className="field-error-text">{err('contactPhone')}</span>
               )}
             </label>
             <label>
@@ -415,10 +403,10 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
                 type="email"
                 value={contactEmail}
                 onChange={(e) => setContactEmail(e.target.value)}
-                className={err("contactEmail") ? "field-error" : ""}
+                className={err('contactEmail') ? 'field-error' : ''}
               />
-              {err("contactEmail") && (
-                <span className="field-error-text">{err("contactEmail")}</span>
+              {err('contactEmail') && (
+                <span className="field-error-text">{err('contactEmail')}</span>
               )}
             </label>
             <label>
@@ -436,7 +424,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
 
             <div className="full-width farm-row-actions">
               <button type="submit" disabled={submitting}>
-                {submitting ? "Saving..." : "Save Changes"}
+                {submitting ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </form>
@@ -445,4 +433,3 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
-

@@ -1,14 +1,7 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode
-} from "react";
-import { apiLogin } from "./backend-api";
+import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import { apiLogin } from './backend-api';
 
 type User = {
   id: string;
@@ -27,7 +20,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-const STORAGE_KEY = "farmhouse-auth";
+const STORAGE_KEY = 'farmhouse-auth';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -35,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === 'undefined') return;
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
       try {
@@ -55,10 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextToken: string = result.accessToken;
     setUser(nextUser);
     setToken(nextToken);
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ user: nextUser, token: nextToken })
+        JSON.stringify({ user: nextUser, token: nextToken }),
       );
     }
   }, []);
@@ -66,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(() => {
     setUser(null);
     setToken(null);
-    if (typeof window !== "undefined") {
+    if (typeof window !== 'undefined') {
       window.localStorage.removeItem(STORAGE_KEY);
     }
   }, []);
@@ -81,8 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    throw new Error("useAuth must be used within AuthProvider");
+    throw new Error('useAuth must be used within AuthProvider');
   }
   return ctx;
 }
-

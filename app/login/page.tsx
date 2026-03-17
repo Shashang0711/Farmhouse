@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../lib/auth-context";
+import { FormEvent, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../lib/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState("owner@farmhouse.local");
-  const [password, setPassword] = useState("owner123");
+  const [email, setEmail] = useState('owner@farmhouse.local');
+  const [password, setPassword] = useState('owner123');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -18,9 +18,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      router.push("/farms");
+      router.push('/farms');
     } catch (err: any) {
-      setError(err?.message ?? "Login failed");
+      setError(err?.message ?? 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -32,12 +32,7 @@ export default function LoginPage() {
         <h1>Farmhouse Admin</h1>
         <label>
           <span>Email</span>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </label>
         <label>
           <span>Password</span>
@@ -50,10 +45,9 @@ export default function LoginPage() {
         </label>
         {error && <p className="error">{error}</p>}
         <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
+          {loading ? 'Logging in...' : 'Login'}
         </button>
       </form>
     </div>
   );
 }
-

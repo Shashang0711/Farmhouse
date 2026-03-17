@@ -8,12 +8,12 @@ const links = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/farms', label: 'Farms' },
   { href: '/users', label: 'Users' },
-  { href: '/decorations', label: 'Decorations' }
+  { href: '/decorations', label: 'Decorations' },
 ];
 
 export function Sidebar({
   mobileOpen,
-  onNavigate
+  onNavigate,
 }: {
   mobileOpen?: boolean;
   onNavigate?: () => void;
@@ -71,4 +71,3 @@ export function Sidebar({
     </aside>
   );
 }
-

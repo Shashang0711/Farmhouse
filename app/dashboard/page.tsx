@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../lib/auth-context";
-import { apiGet } from "../lib/backend-api";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../lib/auth-context';
+import { apiGet } from '../lib/backend-api';
 
 type Farm = { id: string; isPopular?: boolean; rating?: number | null };
 type User = { id: string };
@@ -22,13 +22,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      router.replace('/login');
     }
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!loading && user && user.role !== "ADMIN") {
-      router.replace("/farms");
+    if (!loading && user && user.role !== 'ADMIN') {
+      router.replace('/farms');
     }
   }, [user, loading, router]);
 
@@ -37,9 +37,9 @@ export default function DashboardPage() {
       if (!token) return;
       try {
         const [farms, users, decorations] = await Promise.all([
-          apiGet<Farm[]>("/farms", token),
-          apiGet<User[]>("/users", token),
-          apiGet<Decoration[]>("/decorations", token)
+          apiGet<Farm[]>('/farms', token),
+          apiGet<User[]>('/users', token),
+          apiGet<Decoration[]>('/decorations', token),
         ]);
         setFarmCount(farms.length);
         setUserCount(users.length);
@@ -47,13 +47,13 @@ export default function DashboardPage() {
         setPopularFarmCount(farms.filter((f) => f.isPopular).length);
         setHighRatedCount(farms.filter((f) => (f.rating ?? 0) >= 4.5).length);
       } catch (err: any) {
-        setError(err?.message ?? "Failed to load analytics");
+        setError(err?.message ?? 'Failed to load analytics');
       }
     };
     void load();
   }, [token]);
 
-  if (!user || user.role !== "ADMIN") return null;
+  if (!user || user.role !== 'ADMIN') return null;
 
   return (
     <div className="page">
@@ -62,36 +62,25 @@ export default function DashboardPage() {
       <section className="card dashboard-grid">
         <div className="stat-card">
           <div className="stat-label">Total Farms</div>
-          <div className="stat-value">
-            {farmCount !== null ? farmCount : "—"}
-          </div>
+          <div className="stat-value">{farmCount !== null ? farmCount : '—'}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Total Users</div>
-          <div className="stat-value">
-            {userCount !== null ? userCount : "—"}
-          </div>
+          <div className="stat-value">{userCount !== null ? userCount : '—'}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Total Decorations</div>
-          <div className="stat-value">
-            {decorationCount !== null ? decorationCount : "—"}
-          </div>
+          <div className="stat-value">{decorationCount !== null ? decorationCount : '—'}</div>
         </div>
         <div className="stat-card">
           <div className="stat-label">Popular Farms</div>
-          <div className="stat-value">
-            {popularFarmCount !== null ? popularFarmCount : "—"}
-          </div>
+          <div className="stat-value">{popularFarmCount !== null ? popularFarmCount : '—'}</div>
           {farmCount !== null && popularFarmCount !== null && farmCount > 0 && (
             <div className="bar-row">
               <div
                 className="bar-fill"
                 style={{
-                  width: `${Math.min(
-                    100,
-                    Math.round((popularFarmCount / farmCount) * 100)
-                  )}%`
+                  width: `${Math.min(100, Math.round((popularFarmCount / farmCount) * 100))}%`,
                 }}
               />
             </div>
@@ -99,18 +88,13 @@ export default function DashboardPage() {
         </div>
         <div className="stat-card">
           <div className="stat-label">Rating ≥ 4.5</div>
-          <div className="stat-value">
-            {highRatedCount !== null ? highRatedCount : "—"}
-          </div>
+          <div className="stat-value">{highRatedCount !== null ? highRatedCount : '—'}</div>
           {farmCount !== null && highRatedCount !== null && farmCount > 0 && (
             <div className="bar-row">
               <div
                 className="bar-fill bar-fill--secondary"
                 style={{
-                  width: `${Math.min(
-                    100,
-                    Math.round((highRatedCount / farmCount) * 100)
-                  )}%`
+                  width: `${Math.min(100, Math.round((highRatedCount / farmCount) * 100))}%`,
                 }}
               />
             </div>
@@ -120,4 +104,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

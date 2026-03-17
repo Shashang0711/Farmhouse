@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
@@ -51,7 +51,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const user = await prisma.user.update({
     where: { id: params.id },
-    data
+    data,
   });
 
   return NextResponse.json(user);
@@ -63,11 +63,10 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
   await prisma.user.delete({ where: { id: params.id } });
   return NextResponse.json(null, { status: 204 });
 }
-

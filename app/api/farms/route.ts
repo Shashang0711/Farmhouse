@@ -7,10 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     requireAuth(req);
   } catch (err: any) {
-    return NextResponse.json(
-      { message: err.message || 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: err.message || 'Unauthorized' }, { status: 401 });
   }
 
   const farms = await prisma.farm.findMany();
@@ -24,7 +21,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
@@ -54,10 +51,7 @@ export async function POST(req: NextRequest) {
   };
 
   if (!body.farms || !Array.isArray(body.farms) || body.farms.length === 0) {
-    return NextResponse.json(
-      { message: 'farms array is required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: 'farms array is required' }, { status: 400 });
   }
 
   const ownerId = payload.sub;
@@ -86,10 +80,10 @@ export async function POST(req: NextRequest) {
             photos: {
               create: photoUrls.map((url, idx) => ({
                 title: `Photo ${idx + 1}`,
-                imageUrl: url
-              }))
+                imageUrl: url,
+              })),
             },
-            ...( {
+            ...({
               price: f.price ?? undefined,
               originalPrice: f.originalPrice ?? undefined,
               rating: f.rating ?? undefined,
@@ -105,9 +99,9 @@ export async function POST(req: NextRequest) {
               isPopular: f.isPopular ?? false,
               discount: f.discount ?? undefined,
               weekdayPrice: f.weekdayPrice ?? undefined,
-              weekendPrice: f.weekendPrice ?? undefined
-            } as any)
-          }
+              weekendPrice: f.weekendPrice ?? undefined,
+            } as any),
+          },
         });
         results.push(farm);
       }
@@ -118,8 +112,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err?.message ?? 'Failed to create farm(s)' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
-

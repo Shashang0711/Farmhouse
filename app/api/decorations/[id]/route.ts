@@ -9,14 +9,11 @@ export async function GET(req: NextRequest, { params }: Params) {
   try {
     requireAuth(req);
   } catch (err: any) {
-    return NextResponse.json(
-      { message: err.message || 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: err.message || 'Unauthorized' }, { status: 401 });
   }
 
   const decoration = await prisma.decoration.findUnique({
-    where: { id: params.id }
+    where: { id: params.id },
   });
   if (!decoration) {
     return NextResponse.json({ message: 'Decoration not found' }, { status: 404 });
@@ -30,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
@@ -45,8 +42,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     data: {
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.description !== undefined ? { description: body.description } : {}),
-      ...(body.price !== undefined ? { price: body.price } : {})
-    }
+      ...(body.price !== undefined ? { price: body.price } : {}),
+    },
   });
 
   return NextResponse.json(decoration);
@@ -58,11 +55,10 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
   await prisma.decoration.delete({ where: { id: params.id } });
   return NextResponse.json(null, { status: 204 });
 }
-

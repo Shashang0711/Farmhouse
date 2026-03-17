@@ -7,10 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     requireAuth(req);
   } catch (err: any) {
-    return NextResponse.json(
-      { message: err.message || 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: err.message || 'Unauthorized' }, { status: 401 });
   }
 
   const photos = await prisma.photography.findMany();
@@ -23,7 +20,7 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
@@ -35,10 +32,7 @@ export async function POST(req: NextRequest) {
   };
 
   if (!body.title || !body.farmId) {
-    return NextResponse.json(
-      { message: 'title and farmId are required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: 'title and farmId are required' }, { status: 400 });
   }
 
   const photo = await prisma.photography.create({
@@ -46,10 +40,9 @@ export async function POST(req: NextRequest) {
       title: body.title,
       description: body.description ?? undefined,
       imageUrl: body.imageUrl ?? undefined,
-      farmId: body.farmId
-    }
+      farmId: body.farmId,
+    },
   });
 
   return NextResponse.json(photo, { status: 201 });
 }
-

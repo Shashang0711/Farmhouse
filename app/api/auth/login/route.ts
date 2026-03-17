@@ -11,32 +11,23 @@ export async function POST(req: NextRequest) {
   };
 
   if (!email || !password) {
-    return NextResponse.json(
-      { message: 'Email and password are required' },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) {
-    return NextResponse.json(
-      { message: 'Invalid credentials' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
   }
 
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) {
-    return NextResponse.json(
-      { message: 'Invalid credentials' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
   }
 
   const payload = {
     sub: user.id,
     email: user.email,
-    role: user.role as Role
+    role: user.role as Role,
   };
 
   const accessToken = signAccessToken(payload);
@@ -47,8 +38,7 @@ export async function POST(req: NextRequest) {
       id: user.id,
       email: user.email,
       name: user.name,
-      role: user.role
-    }
+      role: user.role,
+    },
   });
 }
-

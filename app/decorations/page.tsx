@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../lib/auth-context";
-import { apiGet, apiPost } from "../lib/backend-api";
+import { FormEvent, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../lib/auth-context';
+import { apiGet, apiPost } from '../lib/backend-api';
 
 type Decoration = {
   id: string;
@@ -16,32 +16,32 @@ export default function DecorationsPage() {
   const router = useRouter();
   const { user, token, loading } = useAuth();
   const [decorations, setDecorations] = useState<Decoration[]>([]);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [farmId, setFarmId] = useState("");
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [farmId, setFarmId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      router.replace('/login');
     }
   }, [user, loading, router]);
 
   useEffect(() => {
-    if (!loading && user && user.role !== "ADMIN") {
-      router.replace("/farms");
+    if (!loading && user && user.role !== 'ADMIN') {
+      router.replace('/farms');
     }
   }, [user, loading, router]);
 
   const loadDecorations = async () => {
     if (!token) return;
     try {
-      const data = await apiGet<Decoration[]>("/decorations", token);
+      const data = await apiGet<Decoration[]>('/decorations', token);
       setDecorations(data);
     } catch (err: any) {
-      setError(err?.message ?? "Failed to load decorations");
+      setError(err?.message ?? 'Failed to load decorations');
     }
   };
 
@@ -57,25 +57,25 @@ export default function DecorationsPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await apiPost<Decoration>("/decorations", token, {
+      await apiPost<Decoration>('/decorations', token, {
         name,
         description: description || undefined,
         price: price ? Number(price) : undefined,
-        farmId
+        farmId,
       });
-      setName("");
-      setDescription("");
-      setPrice("");
-      setFarmId("");
+      setName('');
+      setDescription('');
+      setPrice('');
+      setFarmId('');
       await loadDecorations();
     } catch (err: any) {
-      setError(err?.message ?? "Failed to create decoration");
+      setError(err?.message ?? 'Failed to create decoration');
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (!user || user.role !== "ADMIN") {
+  if (!user || user.role !== 'ADMIN') {
     return null;
   }
 
@@ -87,39 +87,23 @@ export default function DecorationsPage() {
         <form onSubmit={handleSubmit} className="form-grid">
           <label>
             <span>Name</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+            <input value={name} onChange={(e) => setName(e.target.value)} required />
           </label>
           <label>
             <span>Description</span>
-            <input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+            <input value={description} onChange={(e) => setDescription(e.target.value)} />
           </label>
           <label>
             <span>Price</span>
-            <input
-              type="number"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              min="0"
-            />
+            <input type="number" value={price} onChange={(e) => setPrice(e.target.value)} min="0" />
           </label>
           <label>
             <span>Farm ID</span>
-            <input
-              value={farmId}
-              onChange={(e) => setFarmId(e.target.value)}
-              required
-            />
+            <input value={farmId} onChange={(e) => setFarmId(e.target.value)} required />
           </label>
           {error && <p className="error">{error}</p>}
           <button type="submit" disabled={submitting}>
-            {submitting ? "Creating..." : "Create Decoration"}
+            {submitting ? 'Creating...' : 'Create Decoration'}
           </button>
         </form>
       </section>
@@ -148,4 +132,3 @@ export default function DecorationsPage() {
     </div>
   );
 }
-

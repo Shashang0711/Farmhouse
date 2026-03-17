@@ -49,4 +49,3 @@ export function requireRole(req: NextRequest, roles: Role[]): JwtPayload {
   }
   return payload;
 }
-

@@ -5,7 +5,7 @@ import { AppFrame } from './ui/app-frame';
 
 export const metadata = {
   title: 'Farmhouse Admin',
-  description: 'Admin panel for Farmhouse backend'
+  description: 'Admin panel for Farmhouse backend',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -19,4 +19,3 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     </html>
   );
 }
-

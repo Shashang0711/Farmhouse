@@ -146,4 +146,3 @@ Implemented in `frontend/app` using App Router:
 - `/users`: list and create users (Owner/Admin).
 - `/photography`: list and create photography records.
 - `/decorations`: list and create decorations.
-

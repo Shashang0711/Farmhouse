@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { FormEvent, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../lib/auth-context";
-import { apiGet, apiPost } from "../lib/backend-api";
+import { FormEvent, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../lib/auth-context';
+import { apiGet, apiPost } from '../lib/backend-api';
 
 type Photo = {
   id: string;
@@ -16,26 +16,26 @@ export default function PhotographyPage() {
   const router = useRouter();
   const { user, token, loading } = useAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [farmId, setFarmId] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [farmId, setFarmId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      router.replace('/login');
     }
   }, [user, loading, router]);
 
   const loadPhotos = async () => {
     if (!token) return;
     try {
-      const data = await apiGet<Photo[]>("/photography", token);
+      const data = await apiGet<Photo[]>('/photography', token);
       setPhotos(data);
     } catch (err: any) {
-      setError(err?.message ?? "Failed to load photography");
+      setError(err?.message ?? 'Failed to load photography');
     }
   };
 
@@ -51,19 +51,19 @@ export default function PhotographyPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await apiPost<Photo>("/photography", token, {
+      await apiPost<Photo>('/photography', token, {
         title,
         description: description || undefined,
         imageUrl: imageUrl || undefined,
-        farmId
+        farmId,
       });
-      setTitle("");
-      setDescription("");
-      setImageUrl("");
-      setFarmId("");
+      setTitle('');
+      setDescription('');
+      setImageUrl('');
+      setFarmId('');
       await loadPhotos();
     } catch (err: any) {
-      setError(err?.message ?? "Failed to create photography");
+      setError(err?.message ?? 'Failed to create photography');
     } finally {
       setSubmitting(false);
     }
@@ -81,37 +81,23 @@ export default function PhotographyPage() {
         <form onSubmit={handleSubmit} className="form-grid">
           <label>
             <span>Title</span>
-            <input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
+            <input value={title} onChange={(e) => setTitle(e.target.value)} required />
           </label>
           <label>
             <span>Description</span>
-            <input
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+            <input value={description} onChange={(e) => setDescription(e.target.value)} />
           </label>
           <label>
             <span>Image URL</span>
-            <input
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-            />
+            <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
           </label>
           <label>
             <span>Farm ID</span>
-            <input
-              value={farmId}
-              onChange={(e) => setFarmId(e.target.value)}
-              required
-            />
+            <input value={farmId} onChange={(e) => setFarmId(e.target.value)} required />
           </label>
           {error && <p className="error">{error}</p>}
           <button type="submit" disabled={submitting}>
-            {submitting ? "Creating..." : "Create Photo"}
+            {submitting ? 'Creating...' : 'Create Photo'}
           </button>
         </form>
       </section>
@@ -140,4 +126,3 @@ export default function PhotographyPage() {
     </div>
   );
 }
-

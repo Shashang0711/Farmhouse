@@ -36,12 +36,8 @@ export function AppFrame({ children }: { children: ReactNode }) {
           onClick={() => setMobileNavOpen(false)}
         />
       )}
-      <Sidebar
-        mobileOpen={mobileNavOpen}
-        onNavigate={() => setMobileNavOpen(false)}
-      />
+      <Sidebar mobileOpen={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} />
       <main className="app-main">{children}</main>
     </div>
   );
 }
-

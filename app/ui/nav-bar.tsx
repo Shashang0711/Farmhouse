@@ -7,7 +7,7 @@ import { useAuth } from '../lib/auth-context';
 const links = [
   { href: '/farms', label: 'Farms' },
   { href: '/users', label: 'Users' },
-  { href: '/decorations', label: 'Decorations' }
+  { href: '/decorations', label: 'Decorations' },
 ];
 
 export function NavBar() {
@@ -30,9 +30,7 @@ export function NavBar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={
-                  pathname.startsWith(link.href) ? 'nav-link active' : 'nav-link'
-                }
+                className={pathname.startsWith(link.href) ? 'nav-link active' : 'nav-link'}
               >
                 {link.label}
               </Link>
@@ -57,4 +55,3 @@ export function NavBar() {
     </header>
   );
 }
-

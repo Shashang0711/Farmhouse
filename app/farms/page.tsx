@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../lib/auth-context";
-import { apiGet } from "../lib/backend-api";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../lib/auth-context';
+import { apiGet } from '../lib/backend-api';
 
 type Farm = {
   id: string;
@@ -25,40 +25,40 @@ export default function FarmsPage() {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      router.replace('/login');
     }
   }, [user, loading, router]);
 
   const loadFarms = async () => {
     if (!token) return;
     try {
-      const data = await apiGet<Farm[]>("/farms", token);
+      const data = await apiGet<Farm[]>('/farms', token);
       setFarms(data);
     } catch (err: any) {
-      setError(err?.message ?? "Failed to load farms");
+      setError(err?.message ?? 'Failed to load farms');
     }
   };
 
   const deleteFarm = async (farmId: string) => {
     if (!token) return;
     const ok = window.confirm(
-      "Delete this farm? This will also delete related photos and decorations."
+      'Delete this farm? This will also delete related photos and decorations.',
     );
     if (!ok) return;
     setRowDeletingId(farmId);
     setError(null);
     try {
       await fetch(`/api/farms/${farmId}`, {
-        method: "DELETE",
+        method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       }).then(async (res) => {
         if (!res.ok && res.status !== 204) throw new Error((await res.text()) || res.statusText);
       });
       await loadFarms();
     } catch (err: any) {
-      setError(err?.message ?? "Failed to delete farm");
+      setError(err?.message ?? 'Failed to delete farm');
     } finally {
       setRowDeletingId(null);
     }
@@ -74,7 +74,7 @@ export default function FarmsPage() {
     return null;
   }
 
-  const isAdmin = user.role === "ADMIN";
+  const isAdmin = user.role === 'ADMIN';
 
   return (
     <div className="page">
@@ -84,7 +84,7 @@ export default function FarmsPage() {
           <button
             type="button"
             className="primary-ghost-button"
-            onClick={() => router.push("/farms/new")}
+            onClick={() => router.push('/farms/new')}
           >
             + Add Farm
           </button>
@@ -113,10 +113,10 @@ export default function FarmsPage() {
                 <td>{farm.name}</td>
                 <td>{farm.location}</td>
                 <td>{farm.description}</td>
-                <td>{farm.price || "—"}</td>
-                <td>{farm.capacity || "—"}</td>
-                <td>{farm.rating !== undefined ? farm.rating : "—"}</td>
-                <td>{farm.isPopular ? "Yes" : "No"}</td>
+                <td>{farm.price || '—'}</td>
+                <td>{farm.capacity || '—'}</td>
+                <td>{farm.rating !== undefined ? farm.rating : '—'}</td>
+                <td>{farm.isPopular ? 'Yes' : 'No'}</td>
                 <td>
                   <div className="row-actions">
                     <button type="button" onClick={() => router.push(`/farms/${farm.id}`)}>
@@ -132,7 +132,7 @@ export default function FarmsPage() {
                           onClick={() => deleteFarm(farm.id)}
                           disabled={rowDeletingId === farm.id}
                         >
-                          {rowDeletingId === farm.id ? "Deleting..." : "Delete"}
+                          {rowDeletingId === farm.id ? 'Deleting...' : 'Delete'}
                         </button>
                       </>
                     )}
@@ -146,4 +146,3 @@ export default function FarmsPage() {
     </div>
   );
 }
-

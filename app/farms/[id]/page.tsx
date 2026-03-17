@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "../../lib/auth-context";
-import { apiGet } from "../../lib/backend-api";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../../lib/auth-context';
+import { apiGet } from '../../lib/backend-api';
 
 type Photo = {
   id: string;
@@ -52,7 +52,7 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      router.replace("/login");
+      router.replace('/login');
     }
   }, [user, loading, router]);
 
@@ -64,7 +64,7 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
         const data = await apiGet<FarmDetail>(`/farms/${params.id}`, token);
         setFarm(data);
       } catch (err: any) {
-        setError(err?.message ?? "Failed to load farm");
+        setError(err?.message ?? 'Failed to load farm');
       }
     };
     void load();
@@ -74,9 +74,9 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="page">
-      <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem" }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
         <h1>Farm Details</h1>
-        <button type="button" onClick={() => router.push("/farms")}>
+        <button type="button" onClick={() => router.push('/farms')}>
           Back to farms
         </button>
       </div>
@@ -88,42 +88,41 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
           <section className="card">
             <h2>{farm.name}</h2>
             <p>
-              <strong>Location:</strong> {farm.location || "—"}
+              <strong>Location:</strong> {farm.location || '—'}
             </p>
             <p>
-              <strong>Description:</strong> {farm.description || "—"}
+              <strong>Description:</strong> {farm.description || '—'}
             </p>
             <p>
-              <strong>Price:</strong> {farm.price || "—"}
+              <strong>Price:</strong> {farm.price || '—'}
             </p>
             <p>
-              <strong>Original Price:</strong> {farm.originalPrice || "—"}
+              <strong>Original Price:</strong> {farm.originalPrice || '—'}
             </p>
             <p>
-              <strong>Rating / Reviews:</strong>{" "}
-              {farm.rating !== undefined ? farm.rating : "—"}{" "}
-              {farm.reviews !== undefined ? `(${farm.reviews} reviews)` : ""}
+              <strong>Rating / Reviews:</strong> {farm.rating !== undefined ? farm.rating : '—'}{' '}
+              {farm.reviews !== undefined ? `(${farm.reviews} reviews)` : ''}
             </p>
             <p>
-              <strong>Capacity:</strong> {farm.capacity || "—"}
+              <strong>Capacity:</strong> {farm.capacity || '—'}
             </p>
             <p>
-              <strong>Popular:</strong> {farm.isPopular ? "Yes" : "No"}
+              <strong>Popular:</strong> {farm.isPopular ? 'Yes' : 'No'}
             </p>
             <p>
-              <strong>Discount:</strong> {farm.discount || "—"}
+              <strong>Discount:</strong> {farm.discount || '—'}
             </p>
             <p>
-              <strong>Weekday 24h:</strong> {farm.weekdayPrice || "—"}
+              <strong>Weekday 24h:</strong> {farm.weekdayPrice || '—'}
             </p>
             <p>
-              <strong>Weekend 24h:</strong> {farm.weekendPrice || "—"}
+              <strong>Weekend 24h:</strong> {farm.weekendPrice || '—'}
             </p>
             <p>
-              <strong>Contact:</strong>{" "}
+              <strong>Contact:</strong>{' '}
               {farm.contactPhone || farm.contactEmail
-                ? `${farm.contactPhone ?? ""} ${farm.contactEmail ?? ""}`.trim()
-                : "—"}
+                ? `${farm.contactPhone ?? ''} ${farm.contactEmail ?? ''}`.trim()
+                : '—'}
             </p>
             <p>
               <strong>Photos:</strong> {farm.photos.length}
@@ -135,7 +134,7 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
 
           <section className="card">
             <h2>Features & Amenities</h2>
-            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
               <div>
                 <h3>Features</h3>
                 {farm.features && farm.features.length > 0 ? (
@@ -165,7 +164,7 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
 
           <section className="card">
             <h2>Facilities & Rules</h2>
-            <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap" }}>
+            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
               <div>
                 <h3>Facilities</h3>
                 {farm.facilities && farm.facilities.length > 0 ? (
@@ -215,10 +214,10 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={p.imageUrl} alt={p.title} style={{ height: 44 }} />
                         ) : (
-                          "—"
+                          '—'
                         )}
                       </td>
-                      <td style={{ wordBreak: "break-all" }}>{p.imageUrl || "—"}</td>
+                      <td style={{ wordBreak: 'break-all' }}>{p.imageUrl || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -243,8 +242,8 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
                   {farm.decorations.map((d) => (
                     <tr key={d.id}>
                       <td>{d.name}</td>
-                      <td>{d.description || "—"}</td>
-                      <td>{d.price ?? "—"}</td>
+                      <td>{d.description || '—'}</td>
+                      <td>{d.price ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -256,4 +255,3 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
     </div>
   );
 }
-

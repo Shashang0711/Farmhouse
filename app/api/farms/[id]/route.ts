@@ -9,15 +9,12 @@ export async function GET(req: NextRequest, { params }: Params) {
   try {
     requireAuth(req);
   } catch (err: any) {
-    return NextResponse.json(
-      { message: err.message || 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: err.message || 'Unauthorized' }, { status: 401 });
   }
 
   const farm = await prisma.farm.findUnique({
     where: { id: params.id },
-    include: { photos: true, decorations: true }
+    include: { photos: true, decorations: true },
   });
   if (!farm) {
     return NextResponse.json({ message: 'Farm not found' }, { status: 404 });
@@ -31,7 +28,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
@@ -78,8 +75,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       ...(body.isPopular !== undefined ? { isPopular: body.isPopular } : {}),
       ...(body.discount !== undefined ? { discount: body.discount } : {}),
       ...(body.weekdayPrice !== undefined ? { weekdayPrice: body.weekdayPrice } : {}),
-      ...(body.weekendPrice !== undefined ? { weekendPrice: body.weekendPrice } : {})
-    }
+      ...(body.weekendPrice !== undefined ? { weekendPrice: body.weekendPrice } : {}),
+    },
   });
 
   return NextResponse.json(farm);
@@ -91,7 +88,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
@@ -103,10 +100,6 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     });
     return NextResponse.json(null, { status: 204 });
   } catch (err: any) {
-    return NextResponse.json(
-      { message: err?.message ?? 'Failed to delete farm' },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: err?.message ?? 'Failed to delete farm' }, { status: 400 });
   }
 }
-

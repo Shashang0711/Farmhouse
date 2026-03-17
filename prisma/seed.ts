@@ -16,8 +16,8 @@ async function main() {
         email,
         name: 'Default Admin',
         password: hashed,
-        role: Role.ADMIN
-      }
+        role: Role.ADMIN,
+      },
     });
     console.log('Seeded admin:', email, 'password:', password);
   } else {
@@ -32,8 +32,8 @@ async function main() {
         name: 'Green Valley Farm',
         location: 'Near City',
         description: 'Sample seeded farm',
-        ownerId: admin.id
-      }
+        ownerId: admin.id,
+      },
     });
     console.log('Seeded farm:', farm.name);
   } else {
@@ -49,4 +49,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-

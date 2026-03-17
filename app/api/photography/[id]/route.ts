@@ -9,14 +9,11 @@ export async function GET(req: NextRequest, { params }: Params) {
   try {
     requireAuth(req);
   } catch (err: any) {
-    return NextResponse.json(
-      { message: err.message || 'Unauthorized' },
-      { status: 401 }
-    );
+    return NextResponse.json({ message: err.message || 'Unauthorized' }, { status: 401 });
   }
 
   const photo = await prisma.photography.findUnique({
-    where: { id: params.id }
+    where: { id: params.id },
   });
   if (!photo) {
     return NextResponse.json({ message: 'Photography not found' }, { status: 404 });
@@ -30,7 +27,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
@@ -45,8 +42,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     data: {
       ...(body.title !== undefined ? { title: body.title } : {}),
       ...(body.description !== undefined ? { description: body.description } : {}),
-      ...(body.imageUrl !== undefined ? { imageUrl: body.imageUrl } : {})
-    }
+      ...(body.imageUrl !== undefined ? { imageUrl: body.imageUrl } : {}),
+    },
   });
 
   return NextResponse.json(photo);
@@ -58,11 +55,10 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },
-      { status: err.message === 'Forbidden' ? 403 : 401 }
+      { status: err.message === 'Forbidden' ? 403 : 401 },
     );
   }
 
   await prisma.photography.delete({ where: { id: params.id } });
   return NextResponse.json(null, { status: 204 });
 }
-
