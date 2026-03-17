@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { apiGet } from '../lib/backend-api';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
+import ConfirmDialog from '../ components/ConfirmDialog';
 
 type Farm = {
   id: string;
@@ -19,9 +21,11 @@ type Farm = {
 export default function FarmsPage() {
   const router = useRouter();
   const { user, token, loading } = useAuth();
+
   const [farms, setFarms] = useState<Farm[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [rowDeletingId, setRowDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -39,28 +43,28 @@ export default function FarmsPage() {
     }
   };
 
-  const deleteFarm = async (farmId: string) => {
-    if (!token) return;
-    const ok = window.confirm(
-      'Delete this farm? This will also delete related photos and decorations.',
-    );
-    if (!ok) return;
-    setRowDeletingId(farmId);
+  const deleteFarm = async () => {
+    if (!token || !confirmDeleteId) return;
+
+    setRowDeletingId(confirmDeleteId);
     setError(null);
+
     try {
-      await fetch(`/api/farms/${farmId}`, {
+      const res = await fetch(`/api/farms/${confirmDeleteId}`, {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }).then(async (res) => {
-        if (!res.ok && res.status !== 204) throw new Error((await res.text()) || res.statusText);
       });
+
+      if (!res.ok) throw new Error(await res.text());
+
       await loadFarms();
     } catch (err: any) {
       setError(err?.message ?? 'Failed to delete farm');
     } finally {
       setRowDeletingId(null);
+      setConfirmDeleteId(null);
     }
   };
 
@@ -70,9 +74,7 @@ export default function FarmsPage() {
     }
   }, [token]);
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   const isAdmin = user.role === 'ADMIN';
 
@@ -90,10 +92,12 @@ export default function FarmsPage() {
           </button>
         )}
       </div>
+
       {error && <p className="error">{error}</p>}
 
       <section className="card">
         <h2>Existing Farms</h2>
+
         <table>
           <thead>
             <tr>
@@ -107,42 +111,83 @@ export default function FarmsPage() {
               <th>Actions</th>
             </tr>
           </thead>
+
           <tbody>
-            {farms.map((farm) => (
-              <tr key={farm.id}>
-                <td>{farm.name}</td>
-                <td>{farm.location}</td>
-                <td>{farm.description}</td>
-                <td>{farm.price || '—'}</td>
-                <td>{farm.capacity || '—'}</td>
-                <td>{farm.rating !== undefined ? farm.rating : '—'}</td>
-                <td>{farm.isPopular ? 'Yes' : 'No'}</td>
-                <td>
-                  <div className="row-actions">
-                    <button type="button" onClick={() => router.push(`/farms/${farm.id}`)}>
-                      View
-                    </button>
-                    {isAdmin && (
-                      <>
-                        <button type="button" onClick={() => router.push(`/farms/${farm.id}/edit`)}>
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => deleteFarm(farm.id)}
-                          disabled={rowDeletingId === farm.id}
-                        >
-                          {rowDeletingId === farm.id ? 'Deleting...' : 'Delete'}
-                        </button>
-                      </>
-                    )}
-                  </div>
+            {farms.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="empty-state">
+                  🚜 No farms found. Click “Add Farm” to get started.
                 </td>
               </tr>
-            ))}
+            ) : (
+              farms.map((farm) => (
+                <tr key={farm.id}>
+                  <td>{farm.name}</td>
+                  <td>{farm.location}</td>
+                  <td>{farm.description}</td>
+                  <td>{farm.price || '—'}</td>
+                  <td>{farm.capacity || '—'}</td>
+                  <td>{farm.rating ?? '—'}</td>
+                  <td>{farm.isPopular ? 'Yes' : 'No'}</td>
+
+                  <td>
+                    <div className="menu-wrap">
+                      <input type="checkbox" className="toggler" />
+
+                      <div className="dots">
+                        <div></div>
+                      </div>
+
+                      <div className="menu">
+                        <ul>
+                          <li>
+                            <button onClick={() => router.push(`/farms/${farm.id}`)}>
+                              <Eye size={16} />
+                              <span>View</span>
+                            </button>
+                          </li>
+
+                          {isAdmin && (
+                            <>
+                              <li>
+                                <button onClick={() => router.push(`/farms/${farm.id}/edit`)}>
+                                  <Pencil size={16} />
+                                  <span>Edit</span>
+                                </button>
+                              </li>
+
+                              <li>
+                                <button
+                                  onClick={() => setConfirmDeleteId(farm.id)}
+                                  className="danger"
+                                >
+                                  <Trash2 size={16} />
+                                  <span>Delete</span>
+                                </button>
+                              </li>
+                            </>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </section>
+
+      {/* ✅ Reusable Dialog */}
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete Farm"
+        description="Are you sure you want to delete this farm? This will also delete related photos and decorations."
+        confirmText="Delete"
+        loading={rowDeletingId === confirmDeleteId}
+        onConfirm={deleteFarm}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

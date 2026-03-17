@@ -98,7 +98,8 @@ export async function DELETE(req: NextRequest, { params }: Params) {
       await tx.decoration.deleteMany({ where: { farmId: params.id } });
       await tx.farm.delete({ where: { id: params.id } });
     });
-    return NextResponse.json(null, { status: 204 });
+
+    return new NextResponse(null, { status: 204 }); // ✅ FIXED
   } catch (err: any) {
     return NextResponse.json({ message: err?.message ?? 'Failed to delete farm' }, { status: 400 });
   }

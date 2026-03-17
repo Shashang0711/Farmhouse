@@ -74,9 +74,16 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
+      <div
+        className="page-header-row"
+        style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}
+      >
         <h1>Farm Details</h1>
-        <button type="button" onClick={() => router.push('/farms')}>
+        <button
+          type="button"
+          className="primary-ghost-button"
+          onClick={() => router.push('/farms')}
+        >
           Back to farms
         </button>
       </div>
