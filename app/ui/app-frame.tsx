@@ -26,7 +26,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
         >
           ☰
         </button>
-        <div className="mobile-topbar-title">Farmhouse Admin</div>
+        <div className="mobile-topbar-title">Farmhouse</div>
       </div>
       {mobileNavOpen && (
         <button

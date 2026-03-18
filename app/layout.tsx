@@ -4,7 +4,7 @@ import { AuthProvider } from './lib/auth-context';
 import { AppFrame } from './ui/app-frame';
 
 export const metadata = {
-  title: 'Farmhouse Admin',
+  title: 'Farmhouse',
   description: 'Admin panel for Farmhouse backend',
 };
 

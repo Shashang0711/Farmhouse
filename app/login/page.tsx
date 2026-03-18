@@ -29,7 +29,7 @@ export default function LoginPage() {
   return (
     <div className="auth-container">
       <form className="card" onSubmit={handleSubmit}>
-        <h1>Farmhouse Admin</h1>
+        <h1>Farmhouse</h1>
         <label>
           <span>Email</span>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />

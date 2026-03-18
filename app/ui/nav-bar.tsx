@@ -23,7 +23,7 @@ export function NavBar() {
   return (
     <header className="nav-bar">
       <div className="nav-left">
-        <span className="brand">Farmhouse Admin</span>
+        <span className="brand">Farmhouse</span>
         {user && (
           <nav>
             {links.map((link) => (

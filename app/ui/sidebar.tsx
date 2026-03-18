@@ -30,7 +30,7 @@ export function Sidebar({
   return (
     <aside className={mobileOpen ? 'sidebar sidebar--open' : 'sidebar'}>
       <div className="sidebar-header">
-        <span className="brand">Farmhouse Admin</span>
+        <span className="brand">Farmhouse</span>
       </div>
       {user && (
         <>
