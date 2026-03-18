@@ -119,13 +119,23 @@ export default function DecorationsPage() {
             </tr>
           </thead>
           <tbody>
-            {decorations.map((d) => (
-              <tr key={d.id}>
-                <td>{d.name}</td>
-                <td>{d.description}</td>
-                <td>{d.price}</td>
+            {decorations.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="empty-state">
+                  No decorations found.
+                </td>
               </tr>
-            ))}
+            ) : (
+              <>
+                {decorations.map((d) => (
+                  <tr key={d.id}>
+                    <td>{d.name}</td>
+                    <td>{d.description}</td>
+                    <td>{d.price}</td>
+                  </tr>
+                ))}
+              </>
+            )}
           </tbody>
         </table>
       </section>

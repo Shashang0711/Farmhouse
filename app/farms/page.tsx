@@ -116,7 +116,7 @@ export default function FarmsPage() {
             {farms.length === 0 ? (
               <tr>
                 <td colSpan={8} className="empty-state">
-                  🚜 No farms found. Click “Add Farm” to get started.
+                  No farms found.
                 </td>
               </tr>
             ) : (

@@ -117,13 +117,23 @@ export default function UsersPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.email}</td>
-                <td>{u.name}</td>
-                <td>{u.role}</td>
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="empty-state">
+                  No users found.
+                </td>
               </tr>
-            ))}
+            ) : (
+              <>
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td>{u.email}</td>
+                    <td>{u.name}</td>
+                    <td>{u.role}</td>
+                  </tr>
+                ))}
+              </>
+            )}
           </tbody>
         </table>
       </section>
