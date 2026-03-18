@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    requireRole(req, [Role.OWNER, Role.ADMIN]);
+    requireRole(req, [Role.ADMIN]);
   } catch (err: any) {
     return NextResponse.json(
       { message: err.message || 'Unauthorized' },

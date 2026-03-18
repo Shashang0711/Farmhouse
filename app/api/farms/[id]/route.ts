@@ -72,7 +72,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       ...(body.rules !== undefined ? { rules: body.rules } : {}),
       ...(body.contactPhone !== undefined ? { contactPhone: body.contactPhone } : {}),
       ...(body.contactEmail !== undefined ? { contactEmail: body.contactEmail } : {}),
-      ...(body.isPopular !== undefined ? { isPopular: body.isPopular } : {}),
+      ...(body.isPopular !== undefined && body.isPopular !== null
+        ? { isPopular: body.isPopular }
+        : {}),
       ...(body.discount !== undefined ? { discount: body.discount } : {}),
       ...(body.weekdayPrice !== undefined ? { weekdayPrice: body.weekdayPrice } : {}),
       ...(body.weekendPrice !== undefined ? { weekendPrice: body.weekendPrice } : {}),
