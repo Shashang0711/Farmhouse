@@ -23,22 +23,6 @@ async function main() {
   } else {
     console.log('Admin already exists, skipping user seed');
   }
-
-  // Seed one example farm for that owner
-  const farms = await prisma.farm.findMany({ where: { ownerId: admin.id } });
-  if (farms.length === 0) {
-    const farm = await prisma.farm.create({
-      data: {
-        name: 'Green Valley Farm',
-        location: 'Near City',
-        description: 'Sample seeded farm',
-        ownerId: admin.id,
-      },
-    });
-    console.log('Seeded farm:', farm.name);
-  } else {
-    console.log('Owner already has farms, skipping farm seed');
-  }
 }
 
 main()
