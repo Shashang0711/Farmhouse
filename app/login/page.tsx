@@ -7,8 +7,8 @@ import { useAuth } from '../lib/auth-context';
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState('owner@farmhouse.local');
-  const [password, setPassword] = useState('owner123');
+  const [email, setEmail] = useState('admin@farmhouse.local');
+  const [password, setPassword] = useState('admin123');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
