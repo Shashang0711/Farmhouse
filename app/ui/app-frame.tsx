@@ -2,13 +2,15 @@
 
 import { ReactNode, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { Bell, Menu, Search, X } from 'lucide-react';
 import { Sidebar } from './sidebar';
+import { useAuth } from '../lib/auth-context';
 
 export function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { user } = useAuth();
 
-  // For auth pages like /login, render without sidebar
   const isAuthPage = pathname === '/login';
 
   if (isAuthPage) {
@@ -17,27 +19,60 @@ export function AppFrame({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-shell">
-      <div className="mobile-topbar">
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
-          onClick={() => setMobileNavOpen((v) => !v)}
-        >
-          ☰
-        </button>
-        <div className="mobile-topbar-title">Farmhouse</div>
-      </div>
-      {mobileNavOpen && (
-        <button
-          type="button"
-          className="mobile-backdrop"
-          aria-label="Close menu"
-          onClick={() => setMobileNavOpen(false)}
-        />
-      )}
+      <div className="app-shell__backdrop" data-open={mobileNavOpen} onClick={() => setMobileNavOpen(false)} />
       <Sidebar mobileOpen={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} />
-      <main className="app-main">{children}</main>
+      <div className="app-shell__content">
+        <div className="mobile-topbar">
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+            onClick={() => setMobileNavOpen((v) => !v)}
+          >
+            {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+          <div className="mobile-topbar-title">Farmhouse</div>
+        </div>
+        <header className="topbar">
+          <div className="topbar__left">
+            <button
+              type="button"
+              className="icon-btn icon-btn--mobile"
+              aria-label={mobileNavOpen ? 'Close menu' : 'Open menu'}
+              onClick={() => setMobileNavOpen((v) => !v)}
+            >
+              {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+            <div>
+              <span className="topbar__eyebrow">Farmhouse admin</span>
+              <div className="topbar__title">
+                {pathname === '/dashboard'
+                  ? 'Overview'
+                  : pathname.split('/').filter(Boolean).at(-1)?.replace(/-/g, ' ') ?? 'Workspace'}
+              </div>
+            </div>
+          </div>
+          <div className="topbar__right">
+            <div className="topbar-search">
+              <Search size={16} />
+              <span>Operations workspace</span>
+            </div>
+            <button type="button" className="icon-btn" aria-label="Notifications">
+              <Bell size={16} />
+            </button>
+            {user ? (
+              <div className="topbar-profile">
+                <div className="topbar-profile__avatar">{user.name.slice(0, 1).toUpperCase()}</div>
+                <div className="topbar-profile__meta">
+                  <strong>{user.name}</strong>
+                  <span>{user.role}</span>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </header>
+        <main className="app-main">{children}</main>
+      </div>
     </div>
   );
 }

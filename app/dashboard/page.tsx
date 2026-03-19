@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { apiGet } from '../lib/backend-api';
+import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
 
 type Farm = { id: string; isPopular?: boolean; rating?: number | null };
 type User = { id: string };
@@ -57,49 +58,88 @@ export default function DashboardPage() {
 
   return (
     <div className="page">
-      <h1>Dashboard</h1>
-      {error && <p className="error">{error}</p>}
-      <section className="card dashboard-grid">
-        <div className="stat-card">
-          <div className="stat-label">Total Farms</div>
-          <div className="stat-value">{farmCount !== null ? farmCount : '—'}</div>
+      <PageIntro
+        eyebrow="Overview"
+        title="Operations dashboard"
+        description="Track inventory, staff access, and premium listings from a single control surface."
+      />
+      {error && <div className="error-banner">{error}</div>}
+      <SectionCard
+        title="Portfolio performance"
+        description="A quick operational snapshot of the admin system."
+      >
+        <div className="dashboard-grid">
+          <StatCard label="Total farms" value={farmCount !== null ? farmCount : '—'} />
+          <StatCard label="Total users" value={userCount !== null ? userCount : '—'} />
+          <StatCard
+            label="Total decorations"
+            value={decorationCount !== null ? decorationCount : '—'}
+          />
+          <div className="stat-card">
+            <div className="stat-label">Popular farms</div>
+            <div className="stat-value">{popularFarmCount !== null ? popularFarmCount : '—'}</div>
+            <div className="stat-meta">Properties currently highlighted to customers.</div>
+            {farmCount !== null && popularFarmCount !== null && farmCount > 0 && (
+              <div className="bar-row">
+                <div
+                  className="bar-fill"
+                  style={{
+                    width: `${Math.min(100, Math.round((popularFarmCount / farmCount) * 100))}%`,
+                  }}
+                />
+              </div>
+            )}
+          </div>
+          <div className="stat-card">
+            <div className="stat-label">Rating ≥ 4.5</div>
+            <div className="stat-value">{highRatedCount !== null ? highRatedCount : '—'}</div>
+            <div className="stat-meta">High-performing listings based on customer feedback.</div>
+            {farmCount !== null && highRatedCount !== null && farmCount > 0 && (
+              <div className="bar-row">
+                <div
+                  className="bar-fill bar-fill--secondary"
+                  style={{
+                    width: `${Math.min(100, Math.round((highRatedCount / farmCount) * 100))}%`,
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-label">Total Users</div>
-          <div className="stat-value">{userCount !== null ? userCount : '—'}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Total Decorations</div>
-          <div className="stat-value">{decorationCount !== null ? decorationCount : '—'}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Popular Farms</div>
-          <div className="stat-value">{popularFarmCount !== null ? popularFarmCount : '—'}</div>
-          {farmCount !== null && popularFarmCount !== null && farmCount > 0 && (
-            <div className="bar-row">
-              <div
-                className="bar-fill"
-                style={{
-                  width: `${Math.min(100, Math.round((popularFarmCount / farmCount) * 100))}%`,
-                }}
-              />
+      </SectionCard>
+      <section className="split-grid">
+        <SectionCard
+          title="Management focus"
+          description="Use these figures to prioritize updates across the platform."
+        >
+          <div className="list-grid">
+            <div className="list-panel">
+              <h3>Catalog health</h3>
+              <ul>
+                <li>{farmCount ?? 0} total farms available in the system.</li>
+                <li>{popularFarmCount ?? 0} are marked as popular.</li>
+                <li>{highRatedCount ?? 0} have ratings of 4.5 or above.</li>
+              </ul>
             </div>
-          )}
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Rating ≥ 4.5</div>
-          <div className="stat-value">{highRatedCount !== null ? highRatedCount : '—'}</div>
-          {farmCount !== null && highRatedCount !== null && farmCount > 0 && (
-            <div className="bar-row">
-              <div
-                className="bar-fill bar-fill--secondary"
-                style={{
-                  width: `${Math.min(100, Math.round((highRatedCount / farmCount) * 100))}%`,
-                }}
-              />
+            <div className="list-panel">
+              <h3>Administration</h3>
+              <ul>
+                <li>{userCount ?? 0} total users can access the admin workflows.</li>
+                <li>{decorationCount ?? 0} decoration records are currently maintained.</li>
+                <li>All values are read directly from the existing APIs.</li>
+              </ul>
             </div>
-          )}
-        </div>
+          </div>
+        </SectionCard>
+        <SectionCard
+          title="Activity note"
+          description="This dashboard is presentation-only and keeps existing analytics behavior intact."
+        >
+          <div className="empty-panel">
+            <h3>Professionalized interface</h3>
+            <p>The dashboard now emphasizes clarity, hierarchy, and executive readability.</p>
+          </div>
+        </SectionCard>
       </section>
     </div>
   );

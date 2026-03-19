@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth-context';
 import { apiGet } from '../../lib/backend-api';
+import { HeaderLink, PageIntro, SectionCard, StatCard } from '../../ui/admin-ui';
 
 type Photo = {
   id: string;
@@ -74,189 +75,207 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="page">
-      <div
-        className="page-header-row"
-        style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}
-      >
-        <h1>Farm Details</h1>
-        <button
-          type="button"
-          className="primary-ghost-button"
-          onClick={() => router.push('/farms')}
-        >
-          Back to farms
-        </button>
-      </div>
+      <PageIntro
+        eyebrow="Listing detail"
+        title={farm ? farm.name : 'Farm details'}
+        description="Inspect the full property record, including amenities, media, pricing, and linked decorations."
+        actions={<HeaderLink href="/farms">Back to farms</HeaderLink>}
+      />
 
-      {error && <p className="error">{error}</p>}
+      {error && <div className="error-banner">{error}</div>}
 
       {farm && (
         <>
-          <section className="card">
-            <h2>{farm.name}</h2>
-            <p>
-              <strong>Location:</strong> {farm.location || '—'}
-            </p>
-            <p>
-              <strong>Description:</strong> {farm.description || '—'}
-            </p>
-            <p>
-              <strong>Price:</strong> {farm.price || '—'}
-            </p>
-            <p>
-              <strong>Original Price:</strong> {farm.originalPrice || '—'}
-            </p>
-            <p>
-              <strong>Rating / Reviews:</strong> {farm.rating !== undefined ? farm.rating : '—'}{' '}
-              {farm.reviews !== undefined ? `(${farm.reviews} reviews)` : ''}
-            </p>
-            <p>
-              <strong>Capacity:</strong> {farm.capacity || '—'}
-            </p>
-            <p>
-              <strong>Popular:</strong> {farm.isPopular ? 'Yes' : 'No'}
-            </p>
-            <p>
-              <strong>Discount:</strong> {farm.discount || '—'}
-            </p>
-            <p>
-              <strong>Weekday 24h:</strong> {farm.weekdayPrice || '—'}
-            </p>
-            <p>
-              <strong>Weekend 24h:</strong> {farm.weekendPrice || '—'}
-            </p>
-            <p>
-              <strong>Contact:</strong>{' '}
-              {farm.contactPhone || farm.contactEmail
-                ? `${farm.contactPhone ?? ''} ${farm.contactEmail ?? ''}`.trim()
-                : '—'}
-            </p>
-            <p>
-              <strong>Photos:</strong> {farm.photos.length}
-            </p>
-            <p>
-              <strong>Decorations:</strong> {farm.decorations.length}
-            </p>
-          </section>
+          <div className="stat-grid">
+            <StatCard label="Photos" value={farm.photos.length} />
+            <StatCard label="Decorations" value={farm.decorations.length} />
+            <StatCard
+              label="Popularity"
+              value={farm.isPopular ? 'Popular' : 'Standard'}
+              meta={farm.discount || 'No discount label'}
+            />
+          </div>
 
-          <section className="card">
-            <h2>Features & Amenities</h2>
-            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-              <div>
-                <h3>Features</h3>
-                {farm.features && farm.features.length > 0 ? (
-                  <ul>
-                    {farm.features.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>—</p>
-                )}
+          <SectionCard title="Property overview" description="Core listing details and customer-facing commercial information.">
+            <div className="details-grid">
+              <div className="detail-card">
+                <strong>Location</strong>
+                <span>{farm.location || '—'}</span>
               </div>
-              <div>
-                <h3>Amenities</h3>
-                {farm.amenities && farm.amenities.length > 0 ? (
-                  <ul>
-                    {farm.amenities.map((a) => (
-                      <li key={a}>{a}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>—</p>
-                )}
+              <div className="detail-card">
+                <strong>Description</strong>
+                <span>{farm.description || '—'}</span>
+              </div>
+              <div className="detail-card">
+                <strong>Display price</strong>
+                <span>{farm.price || '—'}</span>
+              </div>
+              <div className="detail-card">
+                <strong>Original price</strong>
+                <span>{farm.originalPrice || '—'}</span>
+              </div>
+              <div className="detail-card">
+                <strong>Rating / Reviews</strong>
+                <span>
+                  {farm.rating !== undefined ? farm.rating : '—'}{' '}
+                  {farm.reviews !== undefined ? `(${farm.reviews} reviews)` : ''}
+                </span>
+              </div>
+              <div className="detail-card">
+                <strong>Capacity</strong>
+                <span>{farm.capacity || '—'}</span>
+              </div>
+              <div className="detail-card">
+                <strong>Weekday 24h</strong>
+                <span>{farm.weekdayPrice || '—'}</span>
+              </div>
+              <div className="detail-card">
+                <strong>Weekend 24h</strong>
+                <span>{farm.weekendPrice || '—'}</span>
+              </div>
+              <div className="detail-card">
+                <strong>Contact</strong>
+                <span>
+                  {farm.contactPhone || farm.contactEmail
+                    ? `${farm.contactPhone ?? ''} ${farm.contactEmail ?? ''}`.trim()
+                    : '—'}
+                </span>
               </div>
             </div>
+          </SectionCard>
+
+          <section className="list-grid">
+            <SectionCard title="Features & amenities" description="Customer-facing property highlights.">
+              <div className="list-grid">
+                <div className="list-panel">
+                  <h3>Features</h3>
+                  {farm.features && farm.features.length > 0 ? (
+                    <div className="pill-list">
+                      {farm.features.map((f) => (
+                        <span key={f} className="pill">
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>—</p>
+                  )}
+                </div>
+                <div className="list-panel">
+                  <h3>Amenities</h3>
+                  {farm.amenities && farm.amenities.length > 0 ? (
+                    <div className="pill-list">
+                      {farm.amenities.map((a) => (
+                        <span key={a} className="pill">
+                          {a}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>—</p>
+                  )}
+                </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Facilities & rules" description="Operational details and guest constraints.">
+              <div className="list-grid">
+                <div className="list-panel">
+                  <h3>Facilities</h3>
+                  {farm.facilities && farm.facilities.length > 0 ? (
+                    <ul>
+                      {farm.facilities.map((f) => (
+                        <li key={f}>{f}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>—</p>
+                  )}
+                </div>
+                <div className="list-panel">
+                  <h3>Rules</h3>
+                  {farm.rules && farm.rules.length > 0 ? (
+                    <ul>
+                      {farm.rules.map((r) => (
+                        <li key={r}>{r}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p>—</p>
+                  )}
+                </div>
+              </div>
+            </SectionCard>
           </section>
 
-          <section className="card">
-            <h2>Facilities & Rules</h2>
-            <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-              <div>
-                <h3>Facilities</h3>
-                {farm.facilities && farm.facilities.length > 0 ? (
-                  <ul>
-                    {farm.facilities.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>—</p>
-                )}
-              </div>
-              <div>
-                <h3>Rules</h3>
-                {farm.rules && farm.rules.length > 0 ? (
-                  <ul>
-                    {farm.rules.map((r) => (
-                      <li key={r}>{r}</li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>—</p>
-                )}
-              </div>
-            </div>
-          </section>
-
-          <section className="card">
-            <h2>Photos</h2>
+          <SectionCard title="Photos" description="Media linked to this listing.">
             {farm.photos.length === 0 ? (
               <p>No photos.</p>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Title</th>
-                    <th>Image</th>
-                    <th>URL</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {farm.photos.map((p) => (
-                    <tr key={p.id}>
-                      <td>{p.title}</td>
-                      <td>
-                        {p.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.imageUrl} alt={p.title} style={{ height: 44 }} />
-                        ) : (
-                          '—'
-                        )}
-                      </td>
-                      <td style={{ wordBreak: 'break-all' }}>{p.imageUrl || '—'}</td>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Title</th>
+                      <th>Image</th>
+                      <th>URL</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {farm.photos.map((p) => (
+                      <tr key={p.id}>
+                        <td className="cell-title">{p.title}</td>
+                        <td>
+                          {p.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={p.imageUrl} alt={p.title} className="gallery-thumb" />
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                        <td>
+                          {p.imageUrl ? (
+                            <a href={p.imageUrl} target="_blank" rel="noreferrer" className="link-text">
+                              {p.imageUrl}
+                            </a>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </section>
+          </SectionCard>
 
-          <section className="card">
-            <h2>Decorations</h2>
+          <SectionCard title="Decorations" description="Linked decoration packages for this farm.">
             {farm.decorations.length === 0 ? (
               <p>No decorations.</p>
             ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Price</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {farm.decorations.map((d) => (
-                    <tr key={d.id}>
-                      <td>{d.name}</td>
-                      <td>{d.description || '—'}</td>
-                      <td>{d.price ?? '—'}</td>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Price</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {farm.decorations.map((d) => (
+                      <tr key={d.id}>
+                        <td className="cell-title">{d.name}</td>
+                        <td className="cell-subtle">{d.description || '—'}</td>
+                        <td>{d.price ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
-          </section>
+          </SectionCard>
         </>
       )}
     </div>

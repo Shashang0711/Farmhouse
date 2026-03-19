@@ -2,13 +2,23 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import {
+  Camera,
+  ChevronRight,
+  Flower2,
+  LayoutDashboard,
+  LogOut,
+  Trees,
+  Users,
+} from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
 
 const links = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/farms', label: 'Farms' },
-  { href: '/users', label: 'Users' },
-  { href: '/decorations', label: 'Decorations' },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/farms', label: 'Farms', icon: Trees },
+  { href: '/users', label: 'Users', icon: Users },
+  { href: '/decorations', label: 'Decorations', icon: Flower2 },
+  { href: '/photography', label: 'Photography', icon: Camera },
 ];
 
 export function Sidebar({
@@ -30,10 +40,15 @@ export function Sidebar({
   return (
     <aside className={mobileOpen ? 'sidebar sidebar--open' : 'sidebar'}>
       <div className="sidebar-header">
-        <span className="brand">Farmhouse</span>
+        <div className="brand-mark">F</div>
+        <div>
+          <div className="brand">Farmhouse</div>
+          <div className="sidebar-subtitle">Hospitality management</div>
+        </div>
       </div>
       {user && (
         <>
+          <div className="sidebar-group-label">Workspace</div>
           <nav className="sidebar-nav">
             {links.map((link) => (
               <Link
@@ -46,7 +61,11 @@ export function Sidebar({
                     : 'sidebar-link'
                 }
               >
-                {link.label}
+                <span className="sidebar-link__lead">
+                  <link.icon size={16} />
+                  <span>{link.label}</span>
+                </span>
+                <ChevronRight size={14} className="sidebar-link__chevron" />
               </Link>
             ))}
           </nav>
@@ -56,6 +75,7 @@ export function Sidebar({
               <div className="sidebar-user-role">{user.role}</div>
             </div>
             <button className="sidebar-logout" onClick={handleLogout}>
+              <LogOut size={16} />
               Logout
             </button>
           </div>

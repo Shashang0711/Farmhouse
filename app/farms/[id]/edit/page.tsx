@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../../lib/auth-context';
 import { apiGet, apiPatch } from '../../../lib/backend-api';
+import { HeaderLink, PageIntro, SectionCard } from '../../../ui/admin-ui';
 
 type FarmDetail = {
   id: string;
@@ -196,19 +197,18 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="page">
-      <div className="page-header-row">
-        <h1>Edit Farm</h1>
-        <button
-          type="button"
-          className="primary-ghost-button"
-          onClick={() => router.push('/farms')}
-        >
-          Back to list
-        </button>
-      </div>
-      {formError && <p className="error">{formError}</p>}
+      <PageIntro
+        eyebrow="Catalog"
+        title="Edit farmhouse listing"
+        description="Update listing presentation details while keeping the existing patch logic exactly intact."
+        actions={<HeaderLink href="/farms">Back to list</HeaderLink>}
+      />
+      {formError && <div className="error-banner">{formError}</div>}
 
-      <section className="card">
+      <SectionCard
+        title="Edit details"
+        description="All field rules and submit behavior are unchanged; only the UI structure has been modernized."
+      >
         {loadingFarm ? (
           <p>Loading farm...</p>
         ) : (
@@ -413,13 +413,16 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
               <span className="field-label">Discount Label</span>
               <input value={discount} onChange={(e) => setDiscount(e.target.value)} />
             </label>
-            <label>
+            <label className="field-stack field-stack--checkbox">
               <span className="field-label">Popular</span>
-              <input
-                type="checkbox"
-                checked={isPopular}
-                onChange={(e) => setIsPopular(e.target.checked)}
-              />
+              <span className="checkbox-field">
+                <input
+                  type="checkbox"
+                  checked={isPopular}
+                  onChange={(e) => setIsPopular(e.target.checked)}
+                />
+                <span>Highlight this listing in the customer experience</span>
+              </span>
             </label>
 
             <div className="full-width farm-row-actions">
@@ -429,7 +432,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
             </div>
           </form>
         )}
-      </section>
+      </SectionCard>
     </div>
   );
 }

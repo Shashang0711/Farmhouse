@@ -6,6 +6,7 @@ import { useAuth } from '../lib/auth-context';
 import { apiGet } from '../lib/backend-api';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import ConfirmDialog from '../ components/ConfirmDialog';
+import { HeaderLink, PageIntro, SectionCard } from '../ui/admin-ui';
 
 type Farm = {
   id: string;
@@ -80,105 +81,117 @@ export default function FarmsPage() {
 
   return (
     <div className="page">
-      <div className="page-header-row">
-        <h1>Farms</h1>
-        {isAdmin && (
-          <button
-            type="button"
-            className="primary-ghost-button"
-            onClick={() => router.push('/farms/new')}
-          >
-            + Add Farm
-          </button>
-        )}
-      </div>
+      <PageIntro
+        eyebrow="Catalog"
+        title="Farm listings"
+        description="Review every property, inspect listing quality, and manage edits from one streamlined table."
+        actions={
+          isAdmin ? (
+            <HeaderLink href="/farms/new" variant="primary">
+              Add farm
+            </HeaderLink>
+          ) : null
+        }
+      />
 
-      {error && <p className="error">{error}</p>}
+      {error && <div className="error-banner">{error}</div>}
 
-      <section className="card">
-        <h2>Existing Farms</h2>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Location</th>
-              <th>Description</th>
-              <th>Price</th>
-              <th>Capacity</th>
-              <th>Rating</th>
-              <th>Popular</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {farms.length === 0 ? (
+      <SectionCard
+        title="Existing farms"
+        description={`${farms.length} listing${farms.length === 1 ? '' : 's'} currently available in the system.`}
+      >
+        <div className="table-wrap">
+          <table>
+            <thead>
               <tr>
-                <td colSpan={8} className="empty-state">
-                  No farms found.
-                </td>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Description</th>
+                <th>Price</th>
+                <th>Capacity</th>
+                <th>Rating</th>
+                <th>Popular</th>
+                <th>Actions</th>
               </tr>
-            ) : (
-              farms.map((farm) => (
-                <tr key={farm.id}>
-                  <td>{farm.name}</td>
-                  <td>{farm.location}</td>
-                  <td>{farm.description}</td>
-                  <td>{farm.price || '—'}</td>
-                  <td>{farm.capacity || '—'}</td>
-                  <td>{farm.rating ?? '—'}</td>
-                  <td>{farm.isPopular ? 'Yes' : 'No'}</td>
+            </thead>
 
-                  <td>
-                    <div className="menu-wrap">
-                      <input type="checkbox" className="toggler" />
-
-                      <div className="dots">
-                        <div></div>
-                      </div>
-
-                      <div className="menu">
-                        <ul>
-                          <li>
-                            <button onClick={() => router.push(`/farms/${farm.id}`)}>
-                              <Eye size={16} />
-                              <span>View</span>
-                            </button>
-                          </li>
-
-                          {isAdmin && (
-                            <>
-                              <li>
-                                <button onClick={() => router.push(`/farms/${farm.id}/edit`)}>
-                                  <Pencil size={16} />
-                                  <span>Edit</span>
-                                </button>
-                              </li>
-
-                              <li>
-                                <button
-                                  onClick={() => setConfirmDeleteId(farm.id)}
-                                  className="danger"
-                                >
-                                  <Trash2 size={16} />
-                                  <span>Delete</span>
-                                </button>
-                              </li>
-                            </>
-                          )}
-                        </ul>
-                      </div>
-                    </div>
+            <tbody>
+              {farms.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="empty-state">
+                    No farms found.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </section>
+              ) : (
+                farms.map((farm) => (
+                  <tr key={farm.id}>
+                    <td className="cell-title">{farm.name}</td>
+                    <td>{farm.location || '—'}</td>
+                    <td className="cell-subtle">{farm.description || '—'}</td>
+                    <td>{farm.price || '—'}</td>
+                    <td>{farm.capacity || '—'}</td>
+                    <td>{farm.rating ?? '—'}</td>
+                    <td>
+                      <span
+                        className={
+                          farm.isPopular
+                            ? 'status-chip status-chip--success'
+                            : 'status-chip status-chip--neutral'
+                        }
+                      >
+                        {farm.isPopular ? 'Popular' : 'Standard'}
+                      </span>
+                    </td>
 
-      {/* ✅ Reusable Dialog */}
+                    <td>
+                      <div className="menu-wrap">
+                        <input type="checkbox" className="toggler" />
+
+                        <div className="dots">
+                          <div></div>
+                        </div>
+
+                        <div className="menu">
+                          <ul>
+                            <li>
+                              <button onClick={() => router.push(`/farms/${farm.id}`)}>
+                                <Eye size={16} />
+                                <span>View</span>
+                              </button>
+                            </li>
+
+                            {isAdmin && (
+                              <>
+                                <li>
+                                  <button onClick={() => router.push(`/farms/${farm.id}/edit`)}>
+                                    <Pencil size={16} />
+                                    <span>Edit</span>
+                                  </button>
+                                </li>
+
+                                <li>
+                                  <button
+                                    onClick={() => setConfirmDeleteId(farm.id)}
+                                    className="danger"
+                                  >
+                                    <Trash2 size={16} />
+                                    <span>Delete</span>
+                                  </button>
+                                </li>
+                              </>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+
       <ConfirmDialog
         open={!!confirmDeleteId}
         title="Delete Farm"

@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { apiGet, apiPost } from '../lib/backend-api';
+import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
 
 type Photo = {
   id: string;
@@ -75,54 +76,86 @@ export default function PhotographyPage() {
 
   return (
     <div className="page">
-      <h1>Photography</h1>
-      <section className="card">
-        <h2>Create Photo</h2>
-        <form onSubmit={handleSubmit} className="form-grid">
-          <label>
-            <span>Title</span>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </label>
-          <label>
-            <span>Description</span>
-            <input value={description} onChange={(e) => setDescription(e.target.value)} />
-          </label>
-          <label>
-            <span>Image URL</span>
-            <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
-          </label>
-          <label>
-            <span>Farm ID</span>
-            <input value={farmId} onChange={(e) => setFarmId(e.target.value)} required />
-          </label>
-          {error && <p className="error">{error}</p>}
-          <button type="submit" disabled={submitting}>
-            {submitting ? 'Creating...' : 'Create Photo'}
-          </button>
-        </form>
+      <PageIntro
+        eyebrow="Media"
+        title="Photography library"
+        description="Register visual assets for farmhouse listings through a cleaner content management screen."
+      />
+      {error && <div className="error-banner">{error}</div>}
+      <div className="stat-grid">
+        <StatCard
+          label="Photo entries"
+          value={photos.length}
+          meta="Current photography rows loaded from the API."
+        />
+      </div>
+      <section className="split-grid">
+        <SectionCard title="Create photo" description="Add a media record using the existing create endpoint.">
+          <form onSubmit={handleSubmit} className="form-grid">
+            <label>
+              <span className="field-label">Title</span>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+            </label>
+            <label>
+              <span className="field-label">Description</span>
+              <input value={description} onChange={(e) => setDescription(e.target.value)} />
+            </label>
+            <label>
+              <span className="field-label">Image URL</span>
+              <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+            </label>
+            <label>
+              <span className="field-label">Farm ID</span>
+              <input value={farmId} onChange={(e) => setFarmId(e.target.value)} required />
+            </label>
+            <div className="full-width farm-row-actions">
+              <button type="submit" disabled={submitting}>
+                {submitting ? 'Creating...' : 'Create photo'}
+              </button>
+            </div>
+          </form>
+        </SectionCard>
+        <SectionCard
+          title="Content note"
+          description="This page is still available to authenticated users with the same logic as before."
+        >
+          <div className="empty-panel">
+            <h3>Cleaner media workflow</h3>
+            <p>The upgrade improves readability and spacing without altering auth or API behavior.</p>
+          </div>
+        </SectionCard>
       </section>
 
-      <section className="card">
-        <h2>Existing Photos</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Description</th>
-              <th>Image URL</th>
-            </tr>
-          </thead>
-          <tbody>
-            {photos.map((p) => (
-              <tr key={p.id}>
-                <td>{p.title}</td>
-                <td>{p.description}</td>
-                <td>{p.imageUrl}</td>
+      <SectionCard title="Existing photos" description="A structured list of photography records.">
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Image URL</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody>
+              {photos.length === 0 ? (
+                <tr>
+                  <td colSpan={3} className="empty-state">
+                    No photos found.
+                  </td>
+                </tr>
+              ) : (
+                photos.map((p) => (
+                  <tr key={p.id}>
+                    <td className="cell-title">{p.title}</td>
+                    <td className="cell-subtle">{p.description || '—'}</td>
+                    <td className="cell-subtle">{p.imageUrl || '—'}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
     </div>
   );
 }

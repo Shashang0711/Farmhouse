@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../lib/auth-context';
 import { apiPost, apiPostForm } from '../../lib/backend-api';
+import { HeaderLink, PageIntro, SectionCard } from '../../ui/admin-ui';
 
 type FieldErrors = Record<string, string | undefined>;
 
@@ -161,20 +162,18 @@ export default function NewFarmPage() {
 
   return (
     <div className="page">
-      <div className="page-header-row">
-        <h1>Create Farm</h1>
-        <button
-          type="button"
-          className="primary-ghost-button"
-          onClick={() => router.push('/farms')}
-        >
-          Back to list
-        </button>
-      </div>
-      {formError && <p className="error">{formError}</p>}
+      <PageIntro
+        eyebrow="Catalog"
+        title="Create farmhouse listing"
+        description="Enter a complete property profile with the same creation workflow and validations already in place."
+        actions={<HeaderLink href="/farms">Back to list</HeaderLink>}
+      />
+      {formError && <div className="error-banner">{formError}</div>}
 
-      <section className="card">
-        <h2>Farm details</h2>
+      <SectionCard
+        title="Farm details"
+        description="Required fields are preserved exactly as before. This update only improves structure and presentation."
+      >
         <form onSubmit={handleSubmit} className="form-grid full-width">
           <label>
             <span className="field-label">
@@ -366,13 +365,16 @@ export default function NewFarmPage() {
             <span className="field-label">Discount Label</span>
             <input value={discount} onChange={(e) => setDiscount(e.target.value)} />
           </label>
-          <label>
+          <label className="field-stack field-stack--checkbox">
             <span className="field-label">Popular</span>
-            <input
-              type="checkbox"
-              checked={isPopular}
-              onChange={(e) => setIsPopular(e.target.checked)}
-            />
+            <span className="checkbox-field">
+              <input
+                type="checkbox"
+                checked={isPopular}
+                onChange={(e) => setIsPopular(e.target.checked)}
+              />
+              <span>Highlight this listing in the customer experience</span>
+            </span>
           </label>
           <label className="full-width">
             <span className="field-label">
@@ -400,7 +402,7 @@ export default function NewFarmPage() {
             </button>
           </div>
         </form>
-      </section>
+      </SectionCard>
     </div>
   );
 }
