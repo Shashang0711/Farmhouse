@@ -10,7 +10,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: err.message || 'Unauthorized' }, { status: 401 });
   }
 
-  const farms = await prisma.farm.findMany();
+  const farms = await prisma.farm.findMany({
+    include: {
+      images: true,
+    },
+  });
   return NextResponse.json(farms);
 }
 
