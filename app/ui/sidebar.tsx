@@ -2,15 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  Camera,
-  ChevronRight,
-  Flower2,
-  LayoutDashboard,
-  LogOut,
-  Trees,
-  Users,
-} from 'lucide-react';
+import { Camera, ChevronRight, Flower2, LayoutDashboard, LogOut, Trees, Users } from 'lucide-react';
 import { useAuth } from '../lib/auth-context';
 
 const links = [

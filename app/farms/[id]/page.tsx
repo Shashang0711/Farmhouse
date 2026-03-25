@@ -16,8 +16,7 @@ type Photo = {
 type Decoration = {
   id: string;
   name: string;
-  description?: string;
-  price?: number;
+  imageUrl?: string;
 };
 
 type FarmDetail = {
@@ -96,7 +95,10 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
             />
           </div>
 
-          <SectionCard title="Property overview" description="Core listing details and customer-facing commercial information.">
+          <SectionCard
+            title="Property overview"
+            description="Core listing details and customer-facing commercial information."
+          >
             <div className="details-grid">
               <div className="detail-card">
                 <strong>Location</strong>
@@ -145,7 +147,10 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
           </SectionCard>
 
           <section className="list-grid">
-            <SectionCard title="Features & amenities" description="Customer-facing property highlights.">
+            <SectionCard
+              title="Features & amenities"
+              description="Customer-facing property highlights."
+            >
               <div className="list-grid">
                 <div className="list-panel">
                   <h3>Features</h3>
@@ -178,7 +183,10 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
               </div>
             </SectionCard>
 
-            <SectionCard title="Facilities & rules" description="Operational details and guest constraints.">
+            <SectionCard
+              title="Facilities & rules"
+              description="Operational details and guest constraints."
+            >
               <div className="list-grid">
                 <div className="list-panel">
                   <h3>Facilities</h3>
@@ -212,40 +220,13 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
             {farm.photos.length === 0 ? (
               <p>No photos.</p>
             ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Image</th>
-                      <th>URL</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {farm.photos.map((p) => (
-                      <tr key={p.id}>
-                        <td className="cell-title">{p.title}</td>
-                        <td>
-                          {p.imageUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={p.imageUrl} alt={p.title} className="gallery-thumb" />
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td>
-                          {p.imageUrl ? (
-                            <a href={p.imageUrl} target="_blank" rel="noreferrer" className="link-text">
-                              {p.imageUrl}
-                            </a>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="photo-gallery">
+                {farm.photos.map((p) =>
+                  p.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img key={p.id} src={p.imageUrl} alt={p.title} className="gallery-thumb" />
+                  ) : null,
+                )}
               </div>
             )}
           </SectionCard>
@@ -259,16 +240,21 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
                   <thead>
                     <tr>
                       <th>Name</th>
-                      <th>Description</th>
-                      <th>Price</th>
+                      <th>Photo</th>
                     </tr>
                   </thead>
                   <tbody>
                     {farm.decorations.map((d) => (
                       <tr key={d.id}>
                         <td className="cell-title">{d.name}</td>
-                        <td className="cell-subtle">{d.description || '—'}</td>
-                        <td>{d.price ?? '—'}</td>
+                        <td>
+                          {d.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={d.imageUrl} alt={d.name} className="gallery-thumb" />
+                          ) : (
+                            '—'
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

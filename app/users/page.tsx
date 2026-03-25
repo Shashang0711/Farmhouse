@@ -138,12 +138,17 @@ export default function UsersPage() {
         >
           <div className="empty-panel">
             <h3>Access hygiene</h3>
-            <p>The UI is refreshed, but role rules and user creation logic stay exactly the same.</p>
+            <p>
+              The UI is refreshed, but role rules and user creation logic stay exactly the same.
+            </p>
           </div>
         </SectionCard>
       </section>
 
-      <SectionCard title="Existing users" description="A current snapshot of all configured admin users.">
+      <SectionCard
+        title="Existing users"
+        description="A current snapshot of all configured admin users."
+      >
         <div className="table-wrap">
           <table>
             <thead>

@@ -90,7 +90,10 @@ export default function PhotographyPage() {
         />
       </div>
       <section className="split-grid">
-        <SectionCard title="Create photo" description="Add a media record using the existing create endpoint.">
+        <SectionCard
+          title="Create photo"
+          description="Add a media record using the existing create endpoint."
+        >
           <form onSubmit={handleSubmit} className="form-grid">
             <label>
               <span className="field-label">Title</span>
@@ -121,7 +124,9 @@ export default function PhotographyPage() {
         >
           <div className="empty-panel">
             <h3>Cleaner media workflow</h3>
-            <p>The upgrade improves readability and spacing without altering auth or API behavior.</p>
+            <p>
+              The upgrade improves readability and spacing without altering auth or API behavior.
+            </p>
           </div>
         </SectionCard>
       </section>

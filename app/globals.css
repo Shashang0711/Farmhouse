@@ -44,11 +44,7 @@ body {
   margin: 0;
   height: 100vh;
   color: var(--text);
-  font-family:
-    'Avenir Next',
-    'Segoe UI',
-    'Helvetica Neue',
-    sans-serif;
+  font-family: 'Avenir Next', 'Segoe UI', 'Helvetica Neue', sans-serif;
   overflow: hidden;
 }
 

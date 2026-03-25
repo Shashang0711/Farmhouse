@@ -30,7 +30,7 @@ export default function NewFarmPage() {
   const [contactEmail, setContactEmail] = useState('');
   const [discount, setDiscount] = useState('');
   const [isPopular, setIsPopular] = useState(false);
-  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [photoUrlsText, setPhotoUrlsText] = useState('');
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -68,7 +68,11 @@ export default function NewFarmPage() {
     if (!weekendPrice.trim()) errs.weekendPrice = 'Weekend 24h price is required.';
     if (!contactPhone.trim()) errs.contactPhone = 'Contact phone is required.';
     if (!contactEmail.trim()) errs.contactEmail = 'Contact email is required.';
-    if (photoFiles.length < 10) errs.photos = 'At least 10 images are required.';
+    const urls = photoUrlsText
+      .split(/[\n,]/g)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (urls.length === 0) errs.photos = 'At least 1 image URL is required.';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -85,16 +89,13 @@ export default function NewFarmPage() {
 
     setSubmitting(true);
     try {
-      const formData = new FormData();
-      photoFiles.forEach((file) => formData.append('files', file));
+      const photoImageUrls = photoUrlsText
+        .split(/[\n,]/g)
+        .map((s) => s.trim())
+        .filter(Boolean);
 
-      const uploadRes = await apiPostForm<{
-        files: { url: string; name: string; size: number; type: string }[];
-      }>('/uploads', token, formData);
-
-      const photoImageUrls = uploadRes.files.map((f) => f.url);
-      if (photoImageUrls.length < 10) {
-        setFormError('Upload failed: at least 10 images are required.');
+      if (photoImageUrls.length === 0) {
+        setFormError('At least 1 image URL is required.');
         return;
       }
 
@@ -378,21 +379,15 @@ export default function NewFarmPage() {
           </label>
           <label className="full-width">
             <span className="field-label">
-              Photos (min 10) <span className="field-required">*</span>
+              Photo URLs <span className="field-required">*</span>
             </span>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => {
-                const files = Array.from(e.target.files ?? []);
-                setPhotoFiles(files);
-              }}
+            <textarea
+              rows={4}
+              value={photoUrlsText}
+              onChange={(e) => setPhotoUrlsText(e.target.value)}
               className={err('photos') ? 'field-error' : ''}
+              placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
             />
-            {photoFiles.length > 0 && (
-              <span className="field-hint">Selected {photoFiles.length} files</span>
-            )}
             {err('photos') && <span className="field-error-text">{err('photos')}</span>}
           </label>
 

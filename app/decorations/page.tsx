@@ -135,12 +135,18 @@ export default function DecorationsPage() {
         >
           <div className="empty-panel">
             <h3>Better visual clarity</h3>
-            <p>Use this area for quick entry while keeping the existing backend integration untouched.</p>
+            <p>
+              Use this area for quick entry while keeping the existing backend integration
+              untouched.
+            </p>
           </div>
         </SectionCard>
       </section>
 
-      <SectionCard title="Existing decorations" description="Review all configured decoration entries.">
+      <SectionCard
+        title="Existing decorations"
+        description="Review all configured decoration entries."
+      >
         <div className="table-wrap">
           <table>
             <thead>

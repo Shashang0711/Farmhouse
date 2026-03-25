@@ -34,7 +34,10 @@ export function HeaderLink({
   variant?: 'primary' | 'secondary';
 }) {
   return (
-    <Link href={href} className={variant === 'primary' ? 'button-link button-link--primary' : 'button-link'}>
+    <Link
+      href={href}
+      className={variant === 'primary' ? 'button-link button-link--primary' : 'button-link'}
+    >
       {children}
     </Link>
   );
@@ -83,13 +86,7 @@ export function StatCard({
   );
 }
 
-export function EmptyState({
-  title,
-  description,
-}: {
-  title: string;
-  description?: string;
-}) {
+export function EmptyState({ title, description }: { title: string; description?: string }) {
   return (
     <div className="empty-panel">
       <h3>{title}</h3>

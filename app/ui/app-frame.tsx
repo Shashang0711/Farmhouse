@@ -19,7 +19,11 @@ export function AppFrame({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-shell">
-      <div className="app-shell__backdrop" data-open={mobileNavOpen} onClick={() => setMobileNavOpen(false)} />
+      <div
+        className="app-shell__backdrop"
+        data-open={mobileNavOpen}
+        onClick={() => setMobileNavOpen(false)}
+      />
       <Sidebar mobileOpen={mobileNavOpen} onNavigate={() => setMobileNavOpen(false)} />
       <div className="app-shell__content">
         <div className="mobile-topbar">
@@ -48,7 +52,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
               <div className="topbar__title">
                 {pathname === '/dashboard'
                   ? 'Overview'
-                  : pathname.split('/').filter(Boolean).at(-1)?.replace(/-/g, ' ') ?? 'Workspace'}
+                  : (pathname.split('/').filter(Boolean).at(-1)?.replace(/-/g, ' ') ?? 'Workspace')}
               </div>
             </div>
           </div>
