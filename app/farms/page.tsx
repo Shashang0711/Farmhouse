@@ -25,6 +25,8 @@ export default function FarmsPage() {
 
   const [farms, setFarms] = useState<Farm[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [rowDeletingId, setRowDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -37,8 +39,9 @@ export default function FarmsPage() {
   const loadFarms = async () => {
     if (!token) return;
     try {
-      const data = await apiGet<Farm[]>('/farms', token);
-      setFarms(data);
+      const res = await apiGet<{ data: Farm[]; meta: { totalPages: number } }>(`/farms?page=${page}&limit=15`, token);
+      setFarms(res.data);
+      setTotalPages(res.meta.totalPages);
     } catch (err: any) {
       setError(err?.message ?? 'Failed to load farms');
     }
@@ -73,7 +76,7 @@ export default function FarmsPage() {
     if (token) {
       void loadFarms();
     }
-  }, [token]);
+  }, [token, page]);
 
   if (!user) return null;
 
@@ -189,6 +192,24 @@ export default function FarmsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        <div className="pagination" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '15px', marginTop: '1.5rem', padding: '0 1rem', paddingBottom: '1rem' }}>
+          <button 
+            disabled={page === 1} 
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', background: page === 1 ? '#f8fafc' : '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            Previous
+          </button>
+          <span style={{ fontSize: '14px', color: '#64748b' }}>Page {page} of {totalPages || 1}</span>
+          <button 
+            disabled={page >= totalPages || totalPages === 0} 
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', background: page >= totalPages || totalPages === 0 ? '#f8fafc' : '#fff', cursor: page >= totalPages || totalPages === 0 ? 'not-allowed' : 'pointer' }}
+          >
+            Next
+          </button>
         </div>
       </SectionCard>
 

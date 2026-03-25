@@ -37,11 +37,12 @@ export default function DashboardPage() {
     const load = async () => {
       if (!token) return;
       try {
-        const [farms, users, decorations] = await Promise.all([
-          apiGet<Farm[]>('/farms', token),
+        const [farmsRes, users, decorations] = await Promise.all([
+          apiGet<{ data: Farm[]; meta: any }>('/farms?limit=1000', token),
           apiGet<User[]>('/users', token),
           apiGet<Decoration[]>('/decorations', token),
         ]);
+        const farms = farmsRes.data || [];
         setFarmCount(farms.length);
         setUserCount(users.length);
         setDecorationCount(decorations.length);

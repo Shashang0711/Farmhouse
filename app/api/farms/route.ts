@@ -4,13 +4,38 @@ import { Role } from '@prisma/client';
 import { requireAuth, requireRole } from '../_lib/auth';
 
 export async function GET(req: NextRequest) {
-  const farms = await prisma.farm.findMany({
-    include: {
-      images: true,
+  const { searchParams } = new URL(req.url);
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = parseInt(searchParams.get('limit') || '15', 10);
+  const skip = (page - 1) * limit;
+
+  const [farms, total] = await Promise.all([
+    prisma.farm.findMany({
+      skip,
+      take: limit,
+      include: {
+        images: {
+          select: {
+            id: true,
+            imageUrl: true,
+            farmId: true,
+          },
+          take: 10,
+        },
+      },
+    }),
+    prisma.farm.count(),
+  ]);
+
+  return NextResponse.json({
+    data: farms,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     },
   });
-
-  return NextResponse.json(farms);
 }
 
 export async function POST(req: NextRequest) {

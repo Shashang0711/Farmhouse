@@ -61,6 +61,9 @@ export async function GET() {
         results.push(farm);
       }
       return results;
+    }, {
+      maxWait: 5000,
+      timeout: 30000,
     });
 
     return NextResponse.json({ message: `Successfully seeded ${created.length} farms.`, farms: created }, { status: 201 });

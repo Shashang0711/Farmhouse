@@ -6,15 +6,9 @@ import { requireAuth, requireRole } from '../../_lib/auth';
 type Params = { params: { id: string } };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  try {
-    requireAuth(req);
-  } catch (err: any) {
-    return NextResponse.json({ message: err.message || 'Unauthorized' }, { status: 401 });
-  }
-
   const farm = await prisma.farm.findUnique({
     where: { id: params.id },
-    include: { photos: true, decorations: true },
+    include: { images: { select: { id: true, imageUrl: true, farmId: true } } },
   });
   if (!farm) {
     return NextResponse.json({ message: 'Farm not found' }, { status: 404 });
