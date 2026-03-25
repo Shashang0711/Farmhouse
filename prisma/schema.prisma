@@ -48,6 +48,7 @@ model Farm {
   owner        User          @relation("UserFarms", fields: [ownerId], references: [id])
   photos       Photography[]
   decorations  Decoration[]
+  images       FarmImage[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
@@ -72,4 +73,13 @@ model Decoration {
   farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model FarmImage {
+  id        String   @id @default(uuid())
+  imageUrl  String
+  farmId    String
+  farm      Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
