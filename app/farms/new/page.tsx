@@ -70,7 +70,7 @@ export default function NewFarmPage() {
     if (!contactEmail.trim()) errs.contactEmail = 'Contact email is required.';
     const urls = photoUrlsText
       .split(/[\n,]/g)
-      .map((s) => s.trim())
+      .map((s) => s.replace(/["']/g, '').trim())
       .filter(Boolean);
     if (urls.length === 0) errs.photos = 'At least 1 image URL is required.';
     setFieldErrors(errs);
@@ -91,7 +91,7 @@ export default function NewFarmPage() {
     try {
       const photoImageUrls = photoUrlsText
         .split(/[\n,]/g)
-        .map((s) => s.trim())
+        .map((s) => s.replace(/["']/g, '').trim())
         .filter(Boolean);
 
       if (photoImageUrls.length === 0) {
