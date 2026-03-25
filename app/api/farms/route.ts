@@ -9,8 +9,21 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get('limit') || '15', 10);
   const skip = (page - 1) * limit;
 
+  const search = searchParams.get('search') || '';
+
+  const where = search
+    ? {
+        OR: [
+          { name: { contains: search, mode: 'insensitive' as const } },
+          { location: { contains: search, mode: 'insensitive' as const } },
+          { description: { contains: search, mode: 'insensitive' as const } },
+        ],
+      }
+    : {};
+
   const [farms, total] = await Promise.all([
     prisma.farm.findMany({
+      where,
       skip,
       take: limit,
       include: {
@@ -20,11 +33,10 @@ export async function GET(req: NextRequest) {
             imageUrl: true,
             farmId: true,
           },
-          take: 10,
         },
       },
     }),
-    prisma.farm.count(),
+    prisma.farm.count({ where }),
   ]);
 
   return NextResponse.json({

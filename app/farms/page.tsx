@@ -25,6 +25,8 @@ export default function FarmsPage() {
 
   const [farms, setFarms] = useState<Farm[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [rowDeletingId, setRowDeletingId] = useState<string | null>(null);
@@ -36,10 +38,21 @@ export default function FarmsPage() {
     }
   }, [user, loading, router]);
 
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   const loadFarms = async () => {
     if (!token) return;
     try {
-      const res = await apiGet<{ data: Farm[]; meta: { totalPages: number } }>(`/farms?page=${page}&limit=15`, token);
+      const res = await apiGet<{ data: Farm[]; meta: { totalPages: number } }>(
+        `/farms?page=${page}&limit=15&search=${encodeURIComponent(debouncedSearch)}`, 
+        token
+      );
       setFarms(res.data);
       setTotalPages(res.meta.totalPages);
     } catch (err: any) {
@@ -76,7 +89,7 @@ export default function FarmsPage() {
     if (token) {
       void loadFarms();
     }
-  }, [token, page]);
+  }, [token, page, debouncedSearch]);
 
   if (!user) return null;
 
@@ -103,6 +116,15 @@ export default function FarmsPage() {
         title="Existing farms"
         description={`${farms.length} listing${farms.length === 1 ? '' : 's'} currently available in the system.`}
       >
+        <div style={{ padding: '0 1rem 1rem' }}>
+          <input
+            type="text"
+            placeholder="Search farms by name, location, or description..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: '100%', maxWidth: '400px', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '6px', outline: 'none' }}
+          />
+        </div>
         <div className="table-wrap">
           <table>
             <thead>
