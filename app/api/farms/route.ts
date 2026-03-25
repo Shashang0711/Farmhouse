@@ -4,17 +4,12 @@ import { Role } from '@prisma/client';
 import { requireAuth, requireRole } from '../_lib/auth';
 
 export async function GET(req: NextRequest) {
-  try {
-    requireAuth(req);
-  } catch (err: any) {
-    return NextResponse.json({ message: err.message || 'Unauthorized' }, { status: 401 });
-  }
-
   const farms = await prisma.farm.findMany({
     include: {
       images: true,
     },
   });
+
   return NextResponse.json(farms);
 }
 
