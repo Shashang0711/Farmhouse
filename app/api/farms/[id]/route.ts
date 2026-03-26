@@ -8,7 +8,9 @@ type Params = { params: { id: string } };
 export async function GET(req: NextRequest, { params }: Params) {
   const farm = await prisma.farm.findUnique({
     where: { id: params.id },
-    include: { images: { select: { id: true, imageUrl: true, farmId: true } } },
+    include: {
+      images: { select: { id: true, imageUrl: true, farmId: true } },
+    },
   });
   if (!farm) {
     return NextResponse.json({ message: 'Farm not found' }, { status: 404 });
@@ -90,8 +92,6 @@ export async function DELETE(req: NextRequest, { params }: Params) {
 
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.photography.deleteMany({ where: { farmId: params.id } });
-      await tx.decoration.deleteMany({ where: { farmId: params.id } });
       await tx.farm.delete({ where: { id: params.id } });
     });
 

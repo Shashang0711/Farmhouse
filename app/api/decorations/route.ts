@@ -10,7 +10,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ message: err.message || 'Unauthorized' }, { status: 401 });
   }
 
-  const decorations = await prisma.decoration.findMany();
+  const decorations = await prisma.decoration.findMany({
+    include: { images: true },
+  });
   return NextResponse.json(decorations);
 }
 
@@ -25,23 +27,29 @@ export async function POST(req: NextRequest) {
   }
 
   const body = (await req.json()) as {
-    name?: string;
-    description?: string | null;
-    price?: number | null;
-    farmId?: string;
+    title?: string;
+    thumbnailUrl?: string | null;
+    images?: string[];
   };
 
-  if (!body.name || !body.farmId) {
-    return NextResponse.json({ message: 'name and farmId are required' }, { status: 400 });
+  if (!body.title) {
+    return NextResponse.json({ message: 'title is required' }, { status: 400 });
+  }
+
+  const imageUrls = Array.isArray(body.images) ? body.images.filter(Boolean) : [];
+  if (imageUrls.length > 0 && imageUrls.length < 10) {
+    return NextResponse.json({ message: 'At least 10 images are required' }, { status: 400 });
   }
 
   const decoration = await prisma.decoration.create({
     data: {
-      name: body.name,
-      description: body.description ?? undefined,
-      price: body.price ?? undefined,
-      farmId: body.farmId,
+      title: body.title,
+      thumbnailUrl: body.thumbnailUrl ?? undefined,
+      images: {
+        create: imageUrls.map((url) => ({ imageUrl: url })),
+      },
     },
+    include: { images: true },
   });
 
   return NextResponse.json(decoration, { status: 201 });

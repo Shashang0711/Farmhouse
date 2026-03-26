@@ -3,14 +3,19 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
-import { apiGet, apiPost } from '../lib/backend-api';
+import { apiGet, apiPost, apiPostForm } from '../lib/backend-api';
 import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
+
+type PhotographyImage = {
+  id: string;
+  imageUrl: string;
+};
 
 type Photo = {
   id: string;
   title: string;
-  description?: string;
-  imageUrl?: string;
+  thumbnailUrl?: string;
+  images?: PhotographyImage[];
 };
 
 export default function PhotographyPage() {
@@ -18,9 +23,8 @@ export default function PhotographyPage() {
   const { user, token, loading } = useAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [farmId, setFarmId] = useState('');
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,16 +56,34 @@ export default function PhotographyPage() {
     setSubmitting(true);
     setError(null);
     try {
+      let finalThumbnailUrl: string | undefined = undefined;
+      const finalImageUrls: string[] = [];
+
+      if (thumbnailFile) {
+        const formData = new FormData();
+        formData.append('files', thumbnailFile);
+        const res = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, formData);
+        finalThumbnailUrl = res.files[0].url;
+      }
+
+      if (imageFiles.length > 0) {
+        if (imageFiles.length < 10) {
+          throw new Error('At least 10 images are required');
+        }
+        const formData = new FormData();
+        imageFiles.forEach((f) => formData.append('files', f));
+        const res = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, formData);
+        res.files.forEach((f) => finalImageUrls.push(f.url));
+      }
+
       await apiPost<Photo>('/photography', token, {
         title,
-        description: description || undefined,
-        imageUrl: imageUrl || undefined,
-        farmId,
+        thumbnailUrl: finalThumbnailUrl,
+        images: finalImageUrls,
       });
       setTitle('');
-      setDescription('');
-      setImageUrl('');
-      setFarmId('');
+      setThumbnailFile(null);
+      setImageFiles([]);
       await loadPhotos();
     } catch (err: any) {
       setError(err?.message ?? 'Failed to create photography');
@@ -79,7 +101,7 @@ export default function PhotographyPage() {
       <PageIntro
         eyebrow="Media"
         title="Photography library"
-        description="Register visual assets for farmhouse listings through a cleaner content management screen."
+        description="Register standalone visual assets with multi-image support."
       />
       {error && <div className="error-banner">{error}</div>}
       <div className="stat-grid">
@@ -90,27 +112,117 @@ export default function PhotographyPage() {
         />
       </div>
       <section className="split-grid">
-        <SectionCard
-          title="Create photo"
-          description="Add a media record using the existing create endpoint."
-        >
+        <SectionCard title="Create photo" description="Add a standalone media record.">
           <form onSubmit={handleSubmit} className="form-grid">
             <label>
               <span className="field-label">Title</span>
               <input value={title} onChange={(e) => setTitle(e.target.value)} required />
             </label>
             <label>
-              <span className="field-label">Description</span>
-              <input value={description} onChange={(e) => setDescription(e.target.value)} />
+              <span className="field-label">Thumbnail Image</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) setThumbnailFile(e.target.files[0]);
+                }}
+              />
             </label>
-            <label>
-              <span className="field-label">Image URL</span>
-              <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+            {thumbnailFile && (
+              <div
+                style={{
+                  position: 'relative',
+                  display: 'inline-block',
+                  width: 64,
+                  height: 64,
+                  marginTop: 8,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={URL.createObjectURL(thumbnailFile)}
+                  alt="thumb preview"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setThumbnailFile(null)}
+                  style={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    background: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 20,
+                    height: 20,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <label className="full-width">
+              <span className="field-label">Images (min 10)</span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setImageFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                  }
+                }}
+              />
             </label>
-            <label>
-              <span className="field-label">Farm ID</span>
-              <input value={farmId} onChange={(e) => setFarmId(e.target.value)} required />
-            </label>
+            {imageFiles.length > 0 && (
+              <div
+                className="full-width"
+                style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8 }}
+              >
+                {imageFiles.map((file, i) => (
+                  <div
+                    key={i}
+                    style={{ position: 'relative', display: 'inline-block', width: 64, height: 64 }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt="preview"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImageFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                      style={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        background: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: 20,
+                        height: 20,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 12,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="full-width farm-row-actions">
               <button type="submit" disabled={submitting}>
                 {submitting ? 'Creating...' : 'Create photo'}
@@ -119,13 +231,13 @@ export default function PhotographyPage() {
           </form>
         </SectionCard>
         <SectionCard
-          title="Content note"
-          description="This page is still available to authenticated users with the same logic as before."
+          title="Usage note"
+          description="Photography is now a standalone module independent of farm IDs."
         >
           <div className="empty-panel">
-            <h3>Cleaner media workflow</h3>
+            <h3>Visual Management</h3>
             <p>
-              The upgrade improves readability and spacing without altering auth or API behavior.
+              Provides robust file upload capabilities and local preview previews out of the box.
             </p>
           </div>
         </SectionCard>
@@ -137,8 +249,8 @@ export default function PhotographyPage() {
             <thead>
               <tr>
                 <th>Title</th>
-                <th>Description</th>
-                <th>Image URL</th>
+                <th>Thumbnail</th>
+                <th>Total Images</th>
               </tr>
             </thead>
             <tbody>
@@ -152,8 +264,19 @@ export default function PhotographyPage() {
                 photos.map((p) => (
                   <tr key={p.id}>
                     <td className="cell-title">{p.title}</td>
-                    <td className="cell-subtle">{p.description || '—'}</td>
-                    <td className="cell-subtle">{p.imageUrl || '—'}</td>
+                    <td className="cell-subtle">
+                      {p.thumbnailUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.thumbnailUrl}
+                          alt="thumbnail"
+                          style={{ height: 40, width: 40, objectFit: 'cover' }}
+                        />
+                      ) : (
+                        '—'
+                      )}
+                    </td>
+                    <td>{p.images?.length ?? 0}</td>
                   </tr>
                 ))
               )}

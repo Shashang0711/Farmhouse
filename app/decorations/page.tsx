@@ -3,24 +3,28 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
-import { apiGet, apiPost } from '../lib/backend-api';
+import { apiGet, apiPost, apiPostForm } from '../lib/backend-api';
 import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
+
+type DecorationImage = {
+  id: string;
+  imageUrl: string;
+};
 
 type Decoration = {
   id: string;
-  name: string;
-  description?: string;
-  price?: number;
+  title: string;
+  thumbnailUrl?: string;
+  images?: DecorationImage[];
 };
 
 export default function DecorationsPage() {
   const router = useRouter();
   const { user, token, loading } = useAuth();
   const [decorations, setDecorations] = useState<Decoration[]>([]);
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [price, setPrice] = useState('');
-  const [farmId, setFarmId] = useState('');
+  const [title, setTitle] = useState('');
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,16 +62,34 @@ export default function DecorationsPage() {
     setSubmitting(true);
     setError(null);
     try {
+      let finalThumbnailUrl: string | undefined = undefined;
+      const finalImageUrls: string[] = [];
+
+      if (thumbnailFile) {
+        const formData = new FormData();
+        formData.append('files', thumbnailFile);
+        const res = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, formData);
+        finalThumbnailUrl = res.files[0].url;
+      }
+
+      if (imageFiles.length > 0) {
+        if (imageFiles.length < 10) {
+          throw new Error('At least 10 images are required');
+        }
+        const formData = new FormData();
+        imageFiles.forEach((f) => formData.append('files', f));
+        const res = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, formData);
+        res.files.forEach((f) => finalImageUrls.push(f.url));
+      }
+
       await apiPost<Decoration>('/decorations', token, {
-        name,
-        description: description || undefined,
-        price: price ? Number(price) : undefined,
-        farmId,
+        title,
+        thumbnailUrl: finalThumbnailUrl,
+        images: finalImageUrls,
       });
-      setName('');
-      setDescription('');
-      setPrice('');
-      setFarmId('');
+      setTitle('');
+      setThumbnailFile(null);
+      setImageFiles([]);
       await loadDecorations();
     } catch (err: any) {
       setError(err?.message ?? 'Failed to create decoration');
@@ -96,32 +118,117 @@ export default function DecorationsPage() {
         />
       </div>
       <section className="split-grid">
-        <SectionCard
-          title="Create decoration"
-          description="Add a decoration package and attach it to a farm by ID."
-        >
+        <SectionCard title="Create decoration" description="Add a standalone decoration package.">
           <form onSubmit={handleSubmit} className="form-grid">
             <label>
-              <span className="field-label">Name</span>
-              <input value={name} onChange={(e) => setName(e.target.value)} required />
+              <span className="field-label">Title</span>
+              <input value={title} onChange={(e) => setTitle(e.target.value)} required />
             </label>
             <label>
-              <span className="field-label">Description</span>
-              <input value={description} onChange={(e) => setDescription(e.target.value)} />
-            </label>
-            <label>
-              <span className="field-label">Price</span>
+              <span className="field-label">Thumbnail Image</span>
               <input
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                min="0"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files?.[0]) setThumbnailFile(e.target.files[0]);
+                }}
               />
             </label>
-            <label>
-              <span className="field-label">Farm ID</span>
-              <input value={farmId} onChange={(e) => setFarmId(e.target.value)} required />
+            {thumbnailFile && (
+              <div
+                style={{
+                  position: 'relative',
+                  display: 'inline-block',
+                  width: 64,
+                  height: 64,
+                  marginTop: 8,
+                }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={URL.createObjectURL(thumbnailFile)}
+                  alt="thumb preview"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setThumbnailFile(null)}
+                  style={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    background: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 20,
+                    height: 20,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+            <label className="full-width">
+              <span className="field-label">Images (min 10)</span>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => {
+                  if (e.target.files) {
+                    setImageFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                  }
+                }}
+              />
             </label>
+            {imageFiles.length > 0 && (
+              <div
+                className="full-width"
+                style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8 }}
+              >
+                {imageFiles.map((file, i) => (
+                  <div
+                    key={i}
+                    style={{ position: 'relative', display: 'inline-block', width: 64, height: 64 }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={URL.createObjectURL(file)}
+                      alt="preview"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImageFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                      style={{
+                        position: 'absolute',
+                        top: -8,
+                        right: -8,
+                        background: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: 20,
+                        height: 20,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: 12,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="full-width farm-row-actions">
               <button type="submit" disabled={submitting}>
                 {submitting ? 'Creating...' : 'Create decoration'}
@@ -151,9 +258,9 @@ export default function DecorationsPage() {
           <table>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Price</th>
+                <th>Title</th>
+                <th>Thumbnail</th>
+                <th>Total Images</th>
               </tr>
             </thead>
             <tbody>
@@ -167,9 +274,19 @@ export default function DecorationsPage() {
                 <>
                   {decorations.map((d) => (
                     <tr key={d.id}>
-                      <td className="cell-title">{d.name}</td>
-                      <td className="cell-subtle">{d.description || '—'}</td>
-                      <td>{d.price ?? '—'}</td>
+                      <td className="cell-title">{d.title}</td>
+                      <td className="cell-subtle">
+                        {d.thumbnailUrl ? (
+                          <img
+                            src={d.thumbnailUrl}
+                            alt="thumbnail"
+                            style={{ height: 40, width: 40, objectFit: 'cover' }}
+                          />
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                      <td>{d.images?.length ?? 0}</td>
                     </tr>
                   ))}
                 </>

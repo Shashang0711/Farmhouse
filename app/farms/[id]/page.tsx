@@ -6,19 +6,6 @@ import { useAuth } from '../../lib/auth-context';
 import { apiGet } from '../../lib/backend-api';
 import { HeaderLink, PageIntro, SectionCard, StatCard } from '../../ui/admin-ui';
 
-type Photo = {
-  id: string;
-  title: string;
-  description?: string;
-  imageUrl?: string;
-};
-
-type Decoration = {
-  id: string;
-  name: string;
-  imageUrl?: string;
-};
-
 type FarmDetail = {
   id: string;
   name: string;
@@ -40,8 +27,6 @@ type FarmDetail = {
   discount?: string;
   weekdayPrice?: string;
   weekendPrice?: string;
-  photos: Photo[];
-  decorations: Decoration[];
 };
 
 export default function FarmDetailPage({ params }: { params: { id: string } }) {
@@ -86,8 +71,6 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
       {farm && (
         <>
           <div className="stat-grid">
-            <StatCard label="Photos" value={farm.photos.length} />
-            <StatCard label="Decorations" value={farm.decorations.length} />
             <StatCard
               label="Popularity"
               value={farm.isPopular ? 'Popular' : 'Standard'}
@@ -215,53 +198,6 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
               </div>
             </SectionCard>
           </section>
-
-          <SectionCard title="Photos" description="Media linked to this listing.">
-            {farm.photos.length === 0 ? (
-              <p>No photos.</p>
-            ) : (
-              <div className="photo-gallery">
-                {farm.photos.map((p) =>
-                  p.imageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img key={p.id} src={p.imageUrl} alt={p.title} className="gallery-thumb" />
-                  ) : null,
-                )}
-              </div>
-            )}
-          </SectionCard>
-
-          <SectionCard title="Decorations" description="Linked decoration packages for this farm.">
-            {farm.decorations.length === 0 ? (
-              <p>No decorations.</p>
-            ) : (
-              <div className="table-wrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Name</th>
-                      <th>Photo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {farm.decorations.map((d) => (
-                      <tr key={d.id}>
-                        <td className="cell-title">{d.name}</td>
-                        <td>
-                          {d.imageUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={d.imageUrl} alt={d.name} className="gallery-thumb" />
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </SectionCard>
         </>
       )}
     </div>

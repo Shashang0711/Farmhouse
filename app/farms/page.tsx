@@ -50,8 +50,8 @@ export default function FarmsPage() {
     if (!token) return;
     try {
       const res = await apiGet<{ data: Farm[]; meta: { totalPages: number } }>(
-        `/farms?page=${page}&limit=15&search=${encodeURIComponent(debouncedSearch)}`, 
-        token
+        `/farms?page=${page}&limit=15&search=${encodeURIComponent(debouncedSearch)}`,
+        token,
       );
       setFarms(res.data);
       setTotalPages(res.meta.totalPages);
@@ -122,7 +122,14 @@ export default function FarmsPage() {
             placeholder="Search farms by name, location, or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{ width: '100%', maxWidth: '400px', padding: '10px 14px', border: '1px solid #e2e8f0', borderRadius: '6px', outline: 'none' }}
+            style={{
+              width: '100%',
+              maxWidth: '400px',
+              padding: '10px 14px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              outline: 'none',
+            }}
           />
         </div>
         <div className="table-wrap">
@@ -216,19 +223,44 @@ export default function FarmsPage() {
           </table>
         </div>
 
-        <div className="pagination" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '15px', marginTop: '1.5rem', padding: '0 1rem', paddingBottom: '1rem' }}>
-          <button 
-            disabled={page === 1} 
+        <div
+          className="pagination"
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            gap: '15px',
+            marginTop: '1.5rem',
+            padding: '0 1rem',
+            paddingBottom: '1rem',
+          }}
+        >
+          <button
+            disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', background: page === 1 ? '#f8fafc' : '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer' }}
+            style={{
+              padding: '6px 12px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              background: page === 1 ? '#f8fafc' : '#fff',
+              cursor: page === 1 ? 'not-allowed' : 'pointer',
+            }}
           >
             Previous
           </button>
-          <span style={{ fontSize: '14px', color: '#64748b' }}>Page {page} of {totalPages || 1}</span>
-          <button 
-            disabled={page >= totalPages || totalPages === 0} 
+          <span style={{ fontSize: '14px', color: '#64748b' }}>
+            Page {page} of {totalPages || 1}
+          </span>
+          <button
+            disabled={page >= totalPages || totalPages === 0}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            style={{ padding: '6px 12px', border: '1px solid #e2e8f0', borderRadius: '6px', background: page >= totalPages || totalPages === 0 ? '#f8fafc' : '#fff', cursor: page >= totalPages || totalPages === 0 ? 'not-allowed' : 'pointer' }}
+            style={{
+              padding: '6px 12px',
+              border: '1px solid #e2e8f0',
+              borderRadius: '6px',
+              background: page >= totalPages || totalPages === 0 ? '#f8fafc' : '#fff',
+              cursor: page >= totalPages || totalPages === 0 ? 'not-allowed' : 'pointer',
+            }}
           >
             Next
           </button>

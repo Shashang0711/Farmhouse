@@ -46,33 +46,45 @@ model Farm {
   weekendPrice String?
   ownerId      String
   owner        User          @relation("UserFarms", fields: [ownerId], references: [id])
-  photos       Photography[]
-  decorations  Decoration[]
   images       FarmImage[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 }
 
 model Photography {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-  imageUrl    String?
-  farmId      String
-  farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String             @id @default(uuid())
+  title        String
+  thumbnailUrl String?
+  images       PhotographyImage[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model PhotographyImage {
+  id            String      @id @default(uuid())
+  imageUrl      String
+  photographyId String
+  photography   Photography @relation(fields: [photographyId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model Decoration {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  price       Float?
-  farmId      String
-  farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String            @id @default(uuid())
+  title        String
+  thumbnailUrl String?
+  images       DecorationImage[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model DecorationImage {
+  id           String     @id @default(uuid())
+  imageUrl     String
+  decorationId String
+  decoration   Decoration @relation(fields: [decorationId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }
 
 model FarmImage {
