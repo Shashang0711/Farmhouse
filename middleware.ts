@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server';
 const allowedOrigins = [
   'https://helloweekends.in',
   'http://localhost:3000',
-  'https://localhost:3000'
+  'https://localhost:3000',
 ];
 
 export function middleware(request: NextRequest) {
@@ -19,7 +19,10 @@ export function middleware(request: NextRequest) {
     }
     preflightHeaders.set('Access-Control-Allow-Credentials', 'true');
     preflightHeaders.set('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    preflightHeaders.set('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+    preflightHeaders.set(
+      'Access-Control-Allow-Headers',
+      'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
+    );
     return new NextResponse(null, { status: 200, headers: preflightHeaders });
   }
 
@@ -33,13 +36,10 @@ export function middleware(request: NextRequest) {
 
   // Set other CORS headers
   response.headers.set('Access-Control-Allow-Credentials', 'true');
-  response.headers.set(
-    'Access-Control-Allow-Methods',
-    'GET,OPTIONS,PATCH,DELETE,POST,PUT'
-  );
+  response.headers.set('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   response.headers.set(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
   );
 
   return response;

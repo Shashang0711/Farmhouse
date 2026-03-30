@@ -94,6 +94,22 @@ export async function POST(req: NextRequest) {
 
   try {
     const created = await prisma.$transaction(async (tx) => {
+        const allSlugs = await tx.farm.findMany({
+          select: { slug: true },
+          where: { slug: { startsWith: 'HW' } }
+        });
+        
+        let currentMaxSlugNumber = 100;
+        for (const item of allSlugs) {
+          if (item.slug) {
+            const numStr = item.slug.replace('HW', '');
+            const num = parseInt(numStr, 10);
+            if (!isNaN(num) && num > currentMaxSlugNumber) {
+              currentMaxSlugNumber = num;
+            }
+          }
+        }
+
       const results = [];
       for (const f of body.farms!) {
         const name = (f.name ?? '').trim();
@@ -107,8 +123,11 @@ export async function POST(req: NextRequest) {
           throw new Error(`Farm "${name}" requires at least 10 photos.`);
         }
 
+        const nextSlug = `HW${++currentMaxSlugNumber}`;
+
         const farm = await tx.farm.create({
           data: {
+            slug: nextSlug,
             name,
             location: f.location ?? undefined,
             description: f.description ?? undefined,
