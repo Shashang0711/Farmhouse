@@ -30,7 +30,7 @@ export default function NewFarmPage() {
   const [contactEmail, setContactEmail] = useState('');
   const [discount, setDiscount] = useState('');
   const [isPopular, setIsPopular] = useState(false);
-  const [photoUrlsText, setPhotoUrlsText] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -68,11 +68,7 @@ export default function NewFarmPage() {
     if (!weekendPrice.trim()) errs.weekendPrice = 'Weekend 24h price is required.';
     if (!contactPhone.trim()) errs.contactPhone = 'Contact phone is required.';
     if (!contactEmail.trim()) errs.contactEmail = 'Contact email is required.';
-    const urls = photoUrlsText
-      .split(/[\n,]/g)
-      .map((s) => s.replace(/["']/g, '').trim())
-      .filter(Boolean);
-    if (urls.length === 0) errs.photos = 'At least 1 image URL is required.';
+    if (selectedFiles.length < 10) errs.photos = 'At least 10 images are required.';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -89,13 +85,25 @@ export default function NewFarmPage() {
 
     setSubmitting(true);
     try {
-      const photoImageUrls = photoUrlsText
-        .split(/[\n,]/g)
-        .map((s) => s.replace(/["']/g, '').trim())
-        .filter(Boolean);
+      let photoImageUrls: string[] = [];
 
-      if (photoImageUrls.length === 0) {
-        setFormError('At least 1 image URL is required.');
+      if (selectedFiles.length > 0) {
+        const formData = new FormData();
+        selectedFiles.forEach((f) => formData.append('files', f));
+        
+        try {
+          const uploadRes = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, formData);
+          photoImageUrls = uploadRes.files.map((f) => f.url);
+        } catch (err: any) {
+          setFormError(err?.message ?? 'Failed to upload images');
+          setSubmitting(false);
+          return;
+        }
+      }
+
+      if (photoImageUrls.length < 10) {
+        setFormError('At least 10 images are required.');
+        setSubmitting(false);
         return;
       }
 
@@ -379,15 +387,25 @@ export default function NewFarmPage() {
           </label>
           <label className="full-width">
             <span className="field-label">
-              Photo URLs <span className="field-required">*</span>
+              Photos (Upload at least 10) <span className="field-required">*</span>
             </span>
-            <textarea
-              rows={4}
-              value={photoUrlsText}
-              onChange={(e) => setPhotoUrlsText(e.target.value)}
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files) {
+                  setSelectedFiles(Array.from(e.target.files));
+                }
+              }}
               className={err('photos') ? 'field-error' : ''}
-              placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
+              style={{ padding: '8px 0' }}
             />
+            {selectedFiles.length > 0 && (
+              <div style={{ marginTop: '8px', fontSize: '0.9em', color: '#64748b' }}>
+                {selectedFiles.length} file(s) selected
+              </div>
+            )}
             {err('photos') && <span className="field-error-text">{err('photos')}</span>}
           </label>
 
