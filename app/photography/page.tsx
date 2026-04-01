@@ -1,9 +1,14 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Eye, Pencil, Trash2, X } from 'lucide-react';
+import { FileUploadControl } from '../components/FileUploadControl';
+import ConfirmDialog from '../ components/ConfirmDialog';
+import { errorMessageFromUnknown } from '../lib/api-errors';
 import { useAuth } from '../lib/auth-context';
-import { apiGet, apiPost, apiPostForm } from '../lib/backend-api';
+import { apiDelete, apiGet, apiPost, apiPostForm } from '../lib/backend-api';
 import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
 
 type PhotographyImage = {
@@ -27,6 +32,29 @@ export default function PhotographyPage() {
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rowDeletingId, setRowDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const thumbPreviewUrl = useMemo(
+    () => (thumbnailFile ? URL.createObjectURL(thumbnailFile) : null),
+    [thumbnailFile],
+  );
+  const imagePreviewUrls = useMemo(
+    () => imageFiles.map((f) => URL.createObjectURL(f)),
+    [imageFiles],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (thumbPreviewUrl) URL.revokeObjectURL(thumbPreviewUrl);
+    };
+  }, [thumbPreviewUrl]);
+
+  useEffect(() => {
+    return () => {
+      imagePreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [imagePreviewUrls]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -40,7 +68,7 @@ export default function PhotographyPage() {
       const data = await apiGet<Photo[]>('/photography', token);
       setPhotos(data);
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to load photography');
+      setError(errorMessageFromUnknown(err, 'Failed to load photography'));
     }
   };
 
@@ -49,6 +77,21 @@ export default function PhotographyPage() {
       void loadPhotos();
     }
   }, [token]);
+
+  const deletePhoto = async () => {
+    if (!token || !confirmDeleteId) return;
+    setRowDeletingId(confirmDeleteId);
+    setError(null);
+    try {
+      await apiDelete(`/photography/${confirmDeleteId}`, token);
+      await loadPhotos();
+    } catch (err: unknown) {
+      setError(errorMessageFromUnknown(err, 'Failed to delete photography'));
+    } finally {
+      setRowDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -86,7 +129,7 @@ export default function PhotographyPage() {
       setImageFiles([]);
       await loadPhotos();
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to create photography');
+      setError(errorMessageFromUnknown(err, 'Failed to create photography'));
     } finally {
       setSubmitting(false);
     }
@@ -95,6 +138,8 @@ export default function PhotographyPage() {
   if (!user) {
     return null;
   }
+
+  const isAdmin = user.role === 'ADMIN';
 
   return (
     <div className="page">
@@ -118,111 +163,86 @@ export default function PhotographyPage() {
               <span className="field-label">Title</span>
               <input value={title} onChange={(e) => setTitle(e.target.value)} required />
             </label>
-            <label>
-              <span className="field-label">Thumbnail Image</span>
-              <input
-                type="file"
+            <div className="form-field">
+              <span className="field-label">Thumbnail image</span>
+              <FileUploadControl
                 accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files?.[0]) setThumbnailFile(e.target.files[0]);
+                prompt="Drop an image or click to browse"
+                hint="PNG, JPG, or WebP — used as the cover in lists."
+                aria-label="Choose thumbnail image"
+                onFilesPicked={(files) => {
+                  const f = files[0];
+                  if (f) setThumbnailFile(f);
                 }}
               />
-            </label>
-            {thumbnailFile && (
-              <div
-                style={{
-                  position: 'relative',
-                  display: 'inline-block',
-                  width: 64,
-                  height: 64,
-                  marginTop: 8,
-                }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={URL.createObjectURL(thumbnailFile)}
-                  alt="thumb preview"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setThumbnailFile(null)}
-                  style={{
-                    position: 'absolute',
-                    top: -8,
-                    right: -8,
-                    background: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: 20,
-                    height: 20,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-            <label className="full-width">
-              <span className="field-label">Images (min 10)</span>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => {
-                  if (e.target.files) {
-                    setImageFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
-                  }
-                }}
-              />
-            </label>
-            {imageFiles.length > 0 && (
-              <div
-                className="full-width"
-                style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginTop: 8 }}
-              >
-                {imageFiles.map((file, i) => (
-                  <div
-                    key={i}
-                    style={{ position: 'relative', display: 'inline-block', width: 64, height: 64 }}
-                  >
+              {thumbnailFile && thumbPreviewUrl ? (
+                <div className="preview-thumb-row">
+                  <div className="preview-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={URL.createObjectURL(file)}
-                      alt="preview"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
-                    />
+                    <img src={thumbPreviewUrl} alt="" />
                     <button
                       type="button"
-                      onClick={() => setImageFiles((prev) => prev.filter((_, idx) => idx !== i))}
-                      style={{
-                        position: 'absolute',
-                        top: -8,
-                        right: -8,
-                        background: '#ef4444',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '50%',
-                        width: 20,
-                        height: 20,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 12,
-                      }}
+                      className="preview-thumb-remove"
+                      onClick={() => setThumbnailFile(null)}
+                      aria-label="Remove thumbnail"
                     >
-                      ✕
+                      <X size={14} strokeWidth={2.5} />
                     </button>
                   </div>
-                ))}
-              </div>
-            )}
+                </div>
+              ) : null}
+            </div>
+            <div className="form-field full-width">
+              <span className="field-label">Gallery images (min 10)</span>
+              <FileUploadControl
+                multiple
+                accept="image/*"
+                prompt="Add images — click or drop"
+                hint="Select multiple files; you can add more in batches. At least 10 total required."
+                aria-label="Choose gallery images"
+                onFilesPicked={(picked) =>
+                  setImageFiles((prev) => {
+                    const keys = new Set(prev.map((f) => `${f.name}-${f.size}`));
+                    const next = [...prev];
+                    for (const f of picked) {
+                      const k = `${f.name}-${f.size}`;
+                      if (!keys.has(k)) {
+                        keys.add(k);
+                        next.push(f);
+                      }
+                    }
+                    return next;
+                  })
+                }
+              />
+              {imageFiles.length > 0 ? (
+                <>
+                  <p className="field-hint" style={{ marginTop: '0.35rem' }}>
+                    {imageFiles.length} image{imageFiles.length === 1 ? '' : 's'} selected — use × to
+                    remove.
+                  </p>
+                  <div className="preview-thumb-row">
+                    {imageFiles.map((file, i) => (
+                      <div
+                        key={`${file.name}-${file.size}-${i}`}
+                        className="preview-thumb"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={imagePreviewUrls[i]} alt="" />
+                        <button
+                          type="button"
+                          className="preview-thumb-remove"
+                          onClick={() => setImageFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                          aria-label={`Remove ${file.name}`}
+                        >
+                          <X size={14} strokeWidth={2.5} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : null}
+            </div>
             <div className="full-width farm-row-actions">
               <button type="submit" disabled={submitting}>
                 {submitting ? 'Creating...' : 'Create photo'}
@@ -251,12 +271,13 @@ export default function PhotographyPage() {
                 <th>Title</th>
                 <th>Thumbnail</th>
                 <th>Total Images</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody>
               {photos.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="empty-state">
+                  <td colSpan={4} className="empty-state">
                     No photos found.
                   </td>
                 </tr>
@@ -277,6 +298,41 @@ export default function PhotographyPage() {
                       )}
                     </td>
                     <td>{p.images?.length ?? 0}</td>
+                    <td className="table-actions-cell">
+                      <div className="table-actions">
+                        <Link
+                          href={`/photography/${p.id}`}
+                          className="table-action-btn"
+                          title="View entry"
+                          aria-label="View entry"
+                          prefetch
+                        >
+                          <Eye size={16} strokeWidth={2.25} />
+                        </Link>
+                        {isAdmin ? (
+                          <>
+                            <Link
+                              href={`/photography/${p.id}/edit`}
+                              className="table-action-btn"
+                              title="Edit entry"
+                              aria-label="Edit entry"
+                              prefetch
+                            >
+                              <Pencil size={16} strokeWidth={2.25} />
+                            </Link>
+                            <button
+                              type="button"
+                              className="table-action-btn table-action-btn--danger"
+                              title="Delete entry"
+                              aria-label="Delete entry"
+                              onClick={() => setConfirmDeleteId(p.id)}
+                            >
+                              <Trash2 size={16} strokeWidth={2.25} />
+                            </button>
+                          </>
+                        ) : null}
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
@@ -284,6 +340,16 @@ export default function PhotographyPage() {
           </table>
         </div>
       </SectionCard>
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete photography entry"
+        description="This removes the library entry and its images from the system. This cannot be undone."
+        confirmText="Delete"
+        loading={rowDeletingId === confirmDeleteId}
+        onConfirm={deletePhoto}
+        onCancel={() => setConfirmDeleteId(null)}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { errorMessageFromUnknown } from '../../lib/api-errors';
 import { useAuth } from '../../lib/auth-context';
 import { apiGet } from '../../lib/backend-api';
 import { parseStoredAmenity } from '../../lib/amenities';
@@ -72,7 +73,7 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
         const data = await apiGet<FarmDetail>(`/farms/${params.id}`, token);
         setFarm(data);
       } catch (err: any) {
-        setError(err?.message ?? 'Failed to load farm');
+        setError(errorMessageFromUnknown(err, 'Failed to load farm'));
       }
     };
     void load();

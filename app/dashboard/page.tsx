@@ -3,12 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
+import { errorMessageFromUnknown } from '../lib/api-errors';
 import { apiGet } from '../lib/backend-api';
 import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
 
-type Farm = { id: string; isPopular?: boolean; rating?: number | null };
-type User = { id: string };
-type Decoration = { id: string };
+type DashboardSummary = {
+  totalFarms: number;
+  popularFarms: number;
+  highRatedFarms: number;
+  totalUsers: number;
+  totalDecorations: number;
+};
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -37,19 +42,14 @@ export default function DashboardPage() {
     const load = async () => {
       if (!token) return;
       try {
-        const [farmsRes, users, decorations] = await Promise.all([
-          apiGet<{ data: Farm[]; meta: any }>('/farms?limit=1000', token),
-          apiGet<User[]>('/users', token),
-          apiGet<Decoration[]>('/decorations', token),
-        ]);
-        const farms = farmsRes.data || [];
-        setFarmCount(farms.length);
-        setUserCount(users.length);
-        setDecorationCount(decorations.length);
-        setPopularFarmCount(farms.filter((f) => f.isPopular).length);
-        setHighRatedCount(farms.filter((f) => (f.rating ?? 0) >= 4.5).length);
+        const summary = await apiGet<DashboardSummary>('/dashboard-summary', token);
+        setFarmCount(summary.totalFarms);
+        setUserCount(summary.totalUsers);
+        setDecorationCount(summary.totalDecorations);
+        setPopularFarmCount(summary.popularFarms);
+        setHighRatedCount(summary.highRatedFarms);
       } catch (err: any) {
-        setError(err?.message ?? 'Failed to load analytics');
+        setError(errorMessageFromUnknown(err, 'Failed to load analytics'));
       }
     };
     void load();

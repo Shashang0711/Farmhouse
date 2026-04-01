@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
+import { errorMessageFromUnknown } from '../../../lib/api-errors';
 import { useAuth } from '../../../lib/auth-context';
 import { apiGet, apiPatch } from '../../../lib/backend-api';
 import { parseStoredAmenity, type AmenityItem } from '../../../lib/amenities';
@@ -102,7 +103,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
         setDiscount(data.discount ?? '');
         setIsPopular(Boolean(data.isPopular));
       } catch (err: any) {
-        setFormError(err?.message ?? 'Failed to load farm');
+        setFormError(errorMessageFromUnknown(err, 'Failed to load farm'));
       } finally {
         setLoadingFarm(false);
       }
@@ -193,7 +194,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
 
       router.push('/farms');
     } catch (err: any) {
-      setFormError(err?.message ?? 'Failed to update farm');
+      setFormError(errorMessageFromUnknown(err, 'Failed to update farm'));
     } finally {
       setSubmitting(false);
     }

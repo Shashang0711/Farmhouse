@@ -3,11 +3,13 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2, X } from 'lucide-react';
+import { errorMessageFromUnknown } from '../../lib/api-errors';
 import { useAuth } from '../../lib/auth-context';
 import { apiPost, apiPostForm } from '../../lib/backend-api';
 import type { AmenityItem } from '../../lib/amenities';
 import { IconPicker } from '../../components/IconPicker';
 import { AmenityLucideIcon } from '../../components/AmenityLucideIcon';
+import { FileUploadControl } from '../../components/FileUploadControl';
 import { HeaderLink, PageIntro, SectionCard } from '../../ui/admin-ui';
 
 type FieldErrors = Record<string, string | undefined>;
@@ -120,7 +122,7 @@ export default function NewFarmPage() {
           );
           photoImageUrls = uploadRes.files.map((f) => f.url);
         } catch (err: any) {
-          setFormError(err?.message ?? 'Failed to upload images');
+          setFormError(errorMessageFromUnknown(err, 'Failed to upload images'));
           setSubmitting(false);
           return;
         }
@@ -185,7 +187,7 @@ export default function NewFarmPage() {
 
       router.push('/farms');
     } catch (err: any) {
-      setFormError(err?.message ?? 'Failed to create farm');
+      setFormError(errorMessageFromUnknown(err, 'Failed to create farm'));
     } finally {
       setSubmitting(false);
     }
@@ -448,17 +450,18 @@ export default function NewFarmPage() {
               <span>Highlight this listing in the customer experience</span>
             </span>
           </label>
-          <label className="full-width">
+          <div className="form-field full-width">
             <span className="field-label">
-              Photos (Upload at least 10) <span className="field-required">*</span>
+              Photos (upload at least 10) <span className="field-required">*</span>
             </span>
-            <input
-              type="file"
+            <FileUploadControl
               multiple
               accept="image/*"
-              onChange={(e) => {
-                const list = e.target.files ? Array.from(e.target.files) : [];
-                e.target.value = '';
+              prompt="Add listing photos — click or drop"
+              hint="Select multiple images; add more in batches. Minimum 10 required to submit."
+              hasError={!!err('photos')}
+              aria-label="Choose farm listing photos"
+              onFilesPicked={(list) => {
                 if (!list.length) return;
                 setSelectedFiles((prev) => {
                   const keys = new Set(prev.map(fileKey));
@@ -473,8 +476,6 @@ export default function NewFarmPage() {
                   return next;
                 });
               }}
-              className={err('photos') ? 'field-error' : ''}
-              style={{ padding: '8px 0' }}
             />
             {selectedFiles.length > 0 && (
               <>
@@ -506,7 +507,7 @@ export default function NewFarmPage() {
               </>
             )}
             {err('photos') && <span className="field-error-text">{err('photos')}</span>}
-          </label>
+          </div>
 
           <div className="full-width farm-row-actions">
             <button type="submit" disabled={submitting}>

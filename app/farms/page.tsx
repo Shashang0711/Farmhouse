@@ -1,9 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
 import { apiGet } from '../lib/backend-api';
+import { errorMessageFromUnknown, parseApiErrorMessage } from '../lib/api-errors';
+import { isTruncatedInList, truncateForList } from '../lib/text';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import ConfirmDialog from '../ components/ConfirmDialog';
 import { HeaderLink, PageIntro, SectionCard } from '../ui/admin-ui';
@@ -30,6 +33,7 @@ export default function FarmsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalMatching, setTotalMatching] = useState<number | null>(null);
   const [rowDeletingId, setRowDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -50,14 +54,18 @@ export default function FarmsPage() {
   const loadFarms = async () => {
     if (!token) return;
     try {
-      const res = await apiGet<{ data: Farm[]; meta: { totalPages: number } }>(
+      const res = await apiGet<{
+        data: Farm[];
+        meta: { total: number; totalPages: number };
+      }>(
         `/farms?page=${page}&limit=15&search=${encodeURIComponent(debouncedSearch)}`,
         token,
       );
       setFarms(res.data);
       setTotalPages(res.meta.totalPages);
+      setTotalMatching(res.meta.total);
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to load farms');
+      setError(errorMessageFromUnknown(err, 'Failed to load farms'));
     }
   };
 
@@ -75,11 +83,13 @@ export default function FarmsPage() {
         },
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        throw new Error(parseApiErrorMessage(await res.text(), 'Failed to delete farm'));
+      }
 
       await loadFarms();
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to delete farm');
+      setError(errorMessageFromUnknown(err, 'Failed to delete farm'));
     } finally {
       setRowDeletingId(null);
       setConfirmDeleteId(null);
@@ -95,6 +105,7 @@ export default function FarmsPage() {
   if (!user) return null;
 
   const isAdmin = user.role === 'ADMIN';
+  const descPreviewLen = 30;
 
   return (
     <div className="page">
@@ -115,22 +126,21 @@ export default function FarmsPage() {
 
       <SectionCard
         title="Existing farms"
-        description={`${farms.length} listing${farms.length === 1 ? '' : 's'} currently available in the system.`}
+        description={
+          totalMatching != null
+            ? debouncedSearch.trim()
+              ? `${totalMatching} listing${totalMatching === 1 ? '' : 's'} match your search (${farms.length} on this page).`
+              : `${totalMatching} listing${totalMatching === 1 ? '' : 's'} in the catalog (${farms.length} on this page).`
+            : 'Loading listing totals…'
+        }
       >
-        <div style={{ padding: '0 1rem 1rem' }}>
+        <div className="table-toolbar">
           <input
             type="text"
+            className="table-search"
             placeholder="Search by name, slug, location, or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              maxWidth: '400px',
-              padding: '10px 14px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              outline: 'none',
-            }}
           />
         </div>
         <div className="table-wrap">
@@ -162,7 +172,16 @@ export default function FarmsPage() {
                     <td className="cell-title">{farm.name}</td>
                     <td className="cell-slug">{farm.slug?.trim() || '—'}</td>
                     <td>{farm.location || '—'}</td>
-                    <td className="cell-subtle">{farm.description || '—'}</td>
+                    <td
+                      className="cell-subtle cell-subtle--truncate"
+                      title={
+                        isTruncatedInList(farm.description, descPreviewLen)
+                          ? farm.description!.trim()
+                          : undefined
+                      }
+                    >
+                      {truncateForList(farm.description, descPreviewLen)}
+                    </td>
                     <td>{farm.price || '—'}</td>
                     <td>{farm.capacity || '—'}</td>
                     <td>{farm.rating ?? '—'}</td>
@@ -178,45 +197,39 @@ export default function FarmsPage() {
                       </span>
                     </td>
 
-                    <td>
-                      <div className="menu-wrap">
-                        <input type="checkbox" className="toggler" />
-
-                        <div className="dots">
-                          <div></div>
-                        </div>
-
-                        <div className="menu">
-                          <ul>
-                            <li>
-                              <button onClick={() => router.push(`/farms/${farm.id}`)}>
-                                <Eye size={16} />
-                                <span>View</span>
-                              </button>
-                            </li>
-
-                            {isAdmin && (
-                              <>
-                                <li>
-                                  <button onClick={() => router.push(`/farms/${farm.id}/edit`)}>
-                                    <Pencil size={16} />
-                                    <span>Edit</span>
-                                  </button>
-                                </li>
-
-                                <li>
-                                  <button
-                                    onClick={() => setConfirmDeleteId(farm.id)}
-                                    className="danger"
-                                  >
-                                    <Trash2 size={16} />
-                                    <span>Delete</span>
-                                  </button>
-                                </li>
-                              </>
-                            )}
-                          </ul>
-                        </div>
+                    <td className="table-actions-cell">
+                      <div className="table-actions">
+                        <Link
+                          href={`/farms/${farm.id}`}
+                          className="table-action-btn"
+                          title="View"
+                          aria-label="View"
+                          prefetch
+                        >
+                          <Eye size={16} strokeWidth={2.25} />
+                        </Link>
+                        {isAdmin ? (
+                          <>
+                            <Link
+                              href={`/farms/${farm.id}/edit`}
+                              className="table-action-btn"
+                              title="Edit"
+                              aria-label="Edit"
+                              prefetch
+                            >
+                              <Pencil size={16} strokeWidth={2.25} />
+                            </Link>
+                            <button
+                              type="button"
+                              className="table-action-btn table-action-btn--danger"
+                              title="Delete"
+                              aria-label="Delete"
+                              onClick={() => setConfirmDeleteId(farm.id)}
+                            >
+                              <Trash2 size={16} strokeWidth={2.25} />
+                            </button>
+                          </>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -226,44 +239,21 @@ export default function FarmsPage() {
           </table>
         </div>
 
-        <div
-          className="pagination"
-          style={{
-            display: 'flex',
-            justifyContent: 'flex-end',
-            alignItems: 'center',
-            gap: '15px',
-            marginTop: '1.5rem',
-            padding: '0 1rem',
-            paddingBottom: '1rem',
-          }}
-        >
+        <div className="pagination">
           <button
+            type="button"
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              background: page === 1 ? '#f8fafc' : '#fff',
-              cursor: page === 1 ? 'not-allowed' : 'pointer',
-            }}
           >
             Previous
           </button>
-          <span style={{ fontSize: '14px', color: '#64748b' }}>
+          <span className="pagination__meta">
             Page {page} of {totalPages || 1}
           </span>
           <button
+            type="button"
             disabled={page >= totalPages || totalPages === 0}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            style={{
-              padding: '6px 12px',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              background: page >= totalPages || totalPages === 0 ? '#f8fafc' : '#fff',
-              cursor: page >= totalPages || totalPages === 0 ? 'not-allowed' : 'pointer',
-            }}
           >
             Next
           </button>

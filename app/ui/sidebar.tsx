@@ -35,7 +35,7 @@ export function Sidebar({
         <div className="brand-mark">F</div>
         <div>
           <div className="brand">Farmhouse</div>
-          <div className="sidebar-subtitle">Hospitality management</div>
+          <div className="sidebar-subtitle">Farm stays & rural listings</div>
         </div>
       </div>
       {user && (

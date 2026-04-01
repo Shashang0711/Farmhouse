@@ -5,10 +5,13 @@ const prisma = new PrismaClient();
 
 async function main() {
   const email = 'admin@farmhouse.local';
+  /** Plain password for the seeded admin (no @ in the string — use exactly this at sign-in). */
   const password = 'admin123';
 
   // Seed Admin user
-  let admin = await prisma.user.findUnique({ where: { email } });
+  let admin = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: 'insensitive' } },
+  });
   if (!admin) {
     const hashed = await bcrypt.hash(password, 10);
     admin = await prisma.user.create({

@@ -10,11 +10,17 @@ export async function POST(req: NextRequest) {
     password?: string;
   };
 
-  if (!email || !password) {
+  const emailTrimmed = typeof email === 'string' ? email.trim() : '';
+  if (!emailTrimmed || !password) {
     return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  // Case-insensitive email so Admin@x and admin@x both match the stored account.
+  const user = await prisma.user.findFirst({
+    where: {
+      email: { equals: emailTrimmed, mode: 'insensitive' },
+    },
+  });
   if (!user) {
     return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
   }

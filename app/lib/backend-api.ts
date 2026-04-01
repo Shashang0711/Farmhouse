@@ -1,9 +1,11 @@
+import { parseApiErrorMessage } from './api-errors';
+
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api';
 
 async function handleResponse<T>(res: Response): Promise<T> {
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || res.statusText);
+    throw new Error(parseApiErrorMessage(text, res.statusText || 'Request failed'));
   }
   return res.json() as Promise<T>;
 }
@@ -92,7 +94,7 @@ export async function apiDelete<T>(path: string, token: string | null) {
   });
   if (!res.ok && res.status !== 204) {
     const text = await res.text();
-    throw new Error(text || res.statusText);
+    throw new Error(parseApiErrorMessage(text, res.statusText || 'Request failed'));
   }
   return (res.status === 204 ? (null as T) : handleResponse<T>(res)) as T;
 }

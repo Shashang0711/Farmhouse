@@ -1,7 +1,9 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { errorMessageFromUnknown } from '../lib/api-errors';
 import { useAuth } from '../lib/auth-context';
 import { HeaderLink, PageIntro, SectionCard } from '../ui/admin-ui';
 
@@ -14,6 +16,8 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -26,6 +30,8 @@ export default function ProfilePage() {
       setEmail(user.email);
       setPassword('');
       setConfirmPassword('');
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
       setMessage(null);
       setError(null);
     }
@@ -70,15 +76,11 @@ export default function ProfilePage() {
       });
       setPassword('');
       setConfirmPassword('');
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
       setMessage('Profile updated.');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Something went wrong.';
-      try {
-        const parsed = JSON.parse(msg) as { message?: string };
-        setError(parsed.message ?? msg);
-      } catch {
-        setError(msg);
-      }
+      setError(errorMessageFromUnknown(err, 'Something went wrong.'));
     } finally {
       setSaving(false);
     }
@@ -116,23 +118,53 @@ export default function ProfilePage() {
           </label>
           <label className="full-width">
             <span className="field-label">New password</span>
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Leave blank to keep current"
-            />
+            <div className="password-field-wrap">
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Leave blank to keep current"
+              />
+              <button
+                type="button"
+                className="password-field-toggle"
+                onClick={() => setShowNewPassword((v) => !v)}
+                aria-label={showNewPassword ? 'Hide new password' : 'Show new password'}
+                aria-pressed={showNewPassword}
+              >
+                {showNewPassword ? (
+                  <EyeOff size={18} strokeWidth={2} aria-hidden />
+                ) : (
+                  <Eye size={18} strokeWidth={2} aria-hidden />
+                )}
+              </button>
+            </div>
           </label>
           <label className="full-width">
             <span className="field-label">Confirm new password</span>
-            <input
-              type="password"
-              autoComplete="new-password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Repeat if changing password"
-            />
+            <div className="password-field-wrap">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repeat if changing password"
+              />
+              <button
+                type="button"
+                className="password-field-toggle"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                aria-pressed={showConfirmPassword}
+              >
+                {showConfirmPassword ? (
+                  <EyeOff size={18} strokeWidth={2} aria-hidden />
+                ) : (
+                  <Eye size={18} strokeWidth={2} aria-hidden />
+                )}
+              </button>
+            </div>
           </label>
           {error && <p className="full-width field-error-text">{error}</p>}
           {message && <p className="full-width profile-page-success">{message}</p>}

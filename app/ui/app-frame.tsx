@@ -13,7 +13,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
   const isAuthPage = pathname === '/login';
 
   if (isAuthPage) {
-    return <>{children}</>;
+    return <div className="auth-page-root">{children}</div>;
   }
 
   return (

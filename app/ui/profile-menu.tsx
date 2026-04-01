@@ -66,9 +66,9 @@ export function ProfileMenu() {
           role="menu"
           aria-labelledby="topbar-profile-trigger"
         >
-          <div className="topbar-profile-dropdown__title" role="presentation">
+          {/* <div className="topbar-profile-dropdown__title" role="presentation">
             Profile
-          </div>
+          </div> */}
           <Link
             href="/profile"
             className="topbar-profile-dropdown__item"

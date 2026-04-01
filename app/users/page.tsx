@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { errorMessageFromUnknown } from '../lib/api-errors';
 import { useAuth } from '../lib/auth-context';
 import { apiGet, apiPost } from '../lib/backend-api';
 import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
@@ -41,7 +42,7 @@ export default function UsersPage() {
       const data = await apiGet<User[]>('/users', token);
       setUsers(data);
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to load users');
+      setError(errorMessageFromUnknown(err, 'Failed to load users'));
     }
   };
 
@@ -67,7 +68,7 @@ export default function UsersPage() {
       setPassword('');
       await loadUsers();
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to create user');
+      setError(errorMessageFromUnknown(err, 'Failed to create user'));
     } finally {
       setSubmitting(false);
     }
