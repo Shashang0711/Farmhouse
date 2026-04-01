@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/prisma/client';
 import { Role } from '@prisma/client';
 import { requireAuth, requireRole } from '../../_lib/auth';
+import { normalizeAmenitiesForStorage, type AmenityPayload } from '@/app/lib/amenities';
 
 type Params = { params: { id: string } };
 
@@ -38,7 +39,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     reviews?: number | null;
     capacity?: string | null;
     features?: string[];
-    amenities?: string[];
+    amenities?: AmenityPayload[];
     facilities?: string[];
     pricing?: any;
     rules?: string[];
@@ -62,7 +63,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       ...(body.reviews !== undefined ? { reviews: body.reviews } : {}),
       ...(body.capacity !== undefined ? { capacity: body.capacity } : {}),
       ...(body.features !== undefined ? { features: body.features } : {}),
-      ...(body.amenities !== undefined ? { amenities: body.amenities } : {}),
+      ...(body.amenities !== undefined
+        ? { amenities: normalizeAmenitiesForStorage(body.amenities) }
+        : {}),
       ...(body.facilities !== undefined ? { facilities: body.facilities } : {}),
       ...(body.pricing !== undefined ? { pricing: body.pricing } : {}),
       ...(body.rules !== undefined ? { rules: body.rules } : {}),

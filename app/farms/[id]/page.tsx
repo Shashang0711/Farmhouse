@@ -1,10 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 import { apiGet } from '../../lib/backend-api';
+import { parseStoredAmenity } from '../../lib/amenities';
+import { AmenityLucideIcon } from '../../components/AmenityLucideIcon';
 import { HeaderLink, PageIntro, SectionCard, StatCard } from '../../ui/admin-ui';
+
+type FarmImageRow = { id: string; imageUrl: string; farmId: string };
 
 type FarmDetail = {
   id: string;
@@ -27,6 +32,7 @@ type FarmDetail = {
   discount?: string;
   weekdayPrice?: string;
   weekendPrice?: string;
+  images?: FarmImageRow[];
 };
 
 export default function FarmDetailPage({ params }: { params: { id: string } }) {
@@ -34,6 +40,23 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
   const { user, token, loading } = useAuth();
   const [farm, setFarm] = useState<FarmDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const closeLightbox = useCallback(() => setLightboxIndex(null), []);
+
+  useEffect(() => {
+    if (lightboxIndex === null || !farm?.images?.length) return;
+    const last = farm.images.length - 1;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowLeft')
+        setLightboxIndex((i) => (typeof i === 'number' && i > 0 ? i - 1 : i));
+      if (e.key === 'ArrowRight')
+        setLightboxIndex((i) => (typeof i === 'number' && i < last ? i + 1 : i));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [lightboxIndex, farm, closeLightbox]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -77,6 +100,31 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
               meta={farm.discount || 'No discount label'}
             />
           </div>
+
+          <SectionCard
+            title="Photos"
+            description="Listing images as shown to guests. Click a photo to view it larger."
+          >
+            {farm.images && farm.images.length > 0 ? (
+              <div className="farm-detail-gallery">
+                {farm.images.map((img, index) => (
+                  <button
+                    key={img.id}
+                    type="button"
+                    className="farm-detail-gallery__cell"
+                    onClick={() => setLightboxIndex(index)}
+                    aria-label={`Open photo ${index + 1} of ${farm.images!.length}`}
+                  >
+                    <img src={img.imageUrl} alt="" loading="lazy" decoding="async" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="field-hint" style={{ margin: 0 }}>
+                No images are attached to this listing yet.
+              </p>
+            )}
+          </SectionCard>
 
           <SectionCard
             title="Property overview"
@@ -151,17 +199,24 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
                 </div>
                 <div className="list-panel">
                   <h3>Amenities</h3>
-                  {farm.amenities && farm.amenities.length > 0 ? (
-                    <div className="pill-list">
-                      {farm.amenities.map((a) => (
-                        <span key={a} className="pill">
-                          {a}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <p>—</p>
-                  )}
+                  {(() => {
+                    const rows =
+                      farm.amenities
+                        ?.map((raw, i) => ({ ...parseStoredAmenity(raw), i }))
+                        .filter((a) => a.name) ?? [];
+                    return rows.length > 0 ? (
+                      <div className="pill-list">
+                        {rows.map(({ icon, name, i }) => (
+                          <span key={`${name}-${i}`} className="pill pill--amenity">
+                            <AmenityLucideIcon iconName={icon} size={16} />
+                            {name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p>—</p>
+                    );
+                  })()}
                 </div>
               </div>
             </SectionCard>
@@ -198,6 +253,50 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
               </div>
             </SectionCard>
           </section>
+
+          {lightboxIndex !== null &&
+            farm.images &&
+            farm.images.length > 0 &&
+            lightboxIndex >= 0 &&
+            lightboxIndex < farm.images.length && (
+              <div
+                className="farm-photo-lightbox-backdrop"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Photo preview"
+                onClick={closeLightbox}
+              >
+                <div className="farm-photo-lightbox-inner" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    type="button"
+                    className="farm-photo-lightbox-close"
+                    onClick={closeLightbox}
+                    aria-label="Close"
+                  >
+                    <X size={22} />
+                  </button>
+                  <button
+                    type="button"
+                    className="farm-photo-lightbox-nav"
+                    disabled={lightboxIndex <= 0}
+                    onClick={() => setLightboxIndex(lightboxIndex - 1)}
+                    aria-label="Previous photo"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <img src={farm.images[lightboxIndex].imageUrl} alt="" />
+                  <button
+                    type="button"
+                    className="farm-photo-lightbox-nav"
+                    disabled={lightboxIndex >= farm.images.length - 1}
+                    onClick={() => setLightboxIndex(lightboxIndex + 1)}
+                    aria-label="Next photo"
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                </div>
+              </div>
+            )}
         </>
       )}
     </div>

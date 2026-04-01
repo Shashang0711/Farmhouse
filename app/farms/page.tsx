@@ -11,6 +11,7 @@ import { HeaderLink, PageIntro, SectionCard } from '../ui/admin-ui';
 type Farm = {
   id: string;
   name: string;
+  slug?: string | null;
   location?: string;
   description?: string;
   price?: string;
@@ -119,7 +120,7 @@ export default function FarmsPage() {
         <div style={{ padding: '0 1rem 1rem' }}>
           <input
             type="text"
-            placeholder="Search farms by name, location, or description..."
+            placeholder="Search by name, slug, location, or description..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -137,6 +138,7 @@ export default function FarmsPage() {
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Slug</th>
                 <th>Location</th>
                 <th>Description</th>
                 <th>Price</th>
@@ -150,7 +152,7 @@ export default function FarmsPage() {
             <tbody>
               {farms.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="empty-state">
+                  <td colSpan={9} className="empty-state">
                     No farms found.
                   </td>
                 </tr>
@@ -158,6 +160,7 @@ export default function FarmsPage() {
                 farms.map((farm) => (
                   <tr key={farm.id}>
                     <td className="cell-title">{farm.name}</td>
+                    <td className="cell-slug">{farm.slug?.trim() || '—'}</td>
                     <td>{farm.location || '—'}</td>
                     <td className="cell-subtle">{farm.description || '—'}</td>
                     <td>{farm.price || '—'}</td>

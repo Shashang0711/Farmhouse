@@ -2,8 +2,12 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Trash2 } from 'lucide-react';
 import { useAuth } from '../../../lib/auth-context';
 import { apiGet, apiPatch } from '../../../lib/backend-api';
+import { parseStoredAmenity, type AmenityItem } from '../../../lib/amenities';
+import { IconPicker } from '../../../components/IconPicker';
+import { AmenityLucideIcon } from '../../../components/AmenityLucideIcon';
 import { HeaderLink, PageIntro, SectionCard } from '../../../ui/admin-ui';
 
 type FarmDetail = {
@@ -49,7 +53,8 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
   const [reviews, setReviews] = useState('');
   const [capacity, setCapacity] = useState('');
   const [featuresText, setFeaturesText] = useState('');
-  const [amenitiesText, setAmenitiesText] = useState('');
+  const [amenities, setAmenities] = useState<AmenityItem[]>([{ icon: 'Wifi', name: '' }]);
+  const [activeIconIndex, setActiveIconIndex] = useState<number | null>(null);
   const [facilitiesText, setFacilitiesText] = useState('');
   const [rulesText, setRulesText] = useState('');
   const [weekdayPrice, setWeekdayPrice] = useState('');
@@ -86,7 +91,8 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
         setReviews(data.reviews !== undefined && data.reviews !== null ? String(data.reviews) : '');
         setCapacity(data.capacity ?? '');
         setFeaturesText((data.features ?? []).join('\n'));
-        setAmenitiesText((data.amenities ?? []).join('\n'));
+        const amenityRows = (data.amenities ?? []).map((raw) => parseStoredAmenity(raw));
+        setAmenities(amenityRows.length ? amenityRows : [{ icon: 'Wifi', name: '' }]);
         setFacilitiesText((data.facilities ?? []).join('\n'));
         setRulesText((data.rules ?? []).join('\n'));
         setWeekdayPrice(data.weekdayPrice ?? '');
@@ -115,7 +121,8 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
     if (!originalPrice.trim()) errs.originalPrice = 'Original price is required.';
     if (!capacity.trim()) errs.capacity = 'Capacity is required.';
     if (!featuresText.trim()) errs.featuresText = 'At least one feature is required.';
-    if (!amenitiesText.trim()) errs.amenitiesText = 'At least one amenity is required.';
+    if (!amenities.some((a) => a.name.trim()))
+      errs.amenities = 'At least one amenity with a name is required.';
     if (!facilitiesText.trim()) errs.facilitiesText = 'Facilities are required.';
     if (!rulesText.trim()) errs.rulesText = 'Rules are required.';
     if (!weekdayPrice.trim()) errs.weekdayPrice = 'Weekday 24h price is required.';
@@ -142,10 +149,9 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
         .split(/[,\\n]/g)
         .map((s) => s.trim())
         .filter(Boolean);
-      const amenities = amenitiesText
-        .split(/[,\\n]/g)
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const amenitiesPayload = amenities
+        .filter((a) => a.name.trim())
+        .map((a) => ({ icon: a.icon, name: a.name.trim() }));
       const facilities = facilitiesText
         .split(/\\n/g)
         .map((s) => s.trim())
@@ -173,7 +179,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
         reviews: reviews.trim() ? Number(reviews.trim()) : null,
         capacity: capacity.trim(),
         features,
-        amenities,
+        amenities: amenitiesPayload,
         facilities,
         pricing,
         rules,
@@ -316,20 +322,59 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
                 <span className="field-error-text">{err('featuresText')}</span>
               )}
             </label>
-            <label className="full-width">
+            <div className="full-width field-stack">
               <span className="field-label">
-                Amenities (comma or new line) <span className="field-required">*</span>
+                Amenities <span className="field-required">*</span>
               </span>
-              <textarea
-                rows={2}
-                value={amenitiesText}
-                onChange={(e) => setAmenitiesText(e.target.value)}
-                className={err('amenitiesText') ? 'field-error' : ''}
-              />
-              {err('amenitiesText') && (
-                <span className="field-error-text">{err('amenitiesText')}</span>
-              )}
-            </label>
+              <p className="field-hint">Pick a Lucide icon and enter a label for each amenity.</p>
+              <div className="amenity-rows">
+                {amenities.map((item, idx) => (
+                  <div key={idx} className="amenity-row">
+                    <button
+                      type="button"
+                      className={`amenity-icon-select${err('amenities') ? ' field-error' : ''}`}
+                      onClick={() => setActiveIconIndex(idx)}
+                    >
+                      <span className="amenity-icon-preview">
+                        <AmenityLucideIcon iconName={item.icon} size={20} />
+                      </span>
+                      <span className="amenity-icon-label">{item.icon}</span>
+                    </button>
+                    <input
+                      value={item.name}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        setAmenities((prev) =>
+                          prev.map((a, i) => (i === idx ? { ...a, name: v } : a)),
+                        );
+                      }}
+                      placeholder="Amenity name"
+                      className={err('amenities') ? 'field-error' : ''}
+                    />
+                    <button
+                      type="button"
+                      className="amenity-row-remove"
+                      onClick={() =>
+                        setAmenities((prev) =>
+                          prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx),
+                        )
+                      }
+                      aria-label="Remove amenity"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="amenity-add-link"
+                onClick={() => setAmenities((prev) => [...prev, { icon: 'Wifi', name: '' }])}
+              >
+                + Add amenity
+              </button>
+              {err('amenities') && <span className="field-error-text">{err('amenities')}</span>}
+            </div>
             <label className="full-width">
               <span className="field-label">
                 Facilities (one per line) <span className="field-required">*</span>
@@ -433,6 +478,19 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
           </form>
         )}
       </SectionCard>
+
+      {activeIconIndex !== null && amenities[activeIconIndex] && (
+        <IconPicker
+          value={amenities[activeIconIndex].icon}
+          onChange={(iconName) => {
+            setAmenities((prev) =>
+              prev.map((a, i) => (i === activeIconIndex ? { ...a, icon: iconName } : a)),
+            );
+            setActiveIconIndex(null);
+          }}
+          onClose={() => setActiveIconIndex(null)}
+        />
+      )}
     </div>
   );
 }

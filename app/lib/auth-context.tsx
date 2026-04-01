@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
-import { apiLogin } from './backend-api';
+import { apiLogin, apiPatchProfile } from './backend-api';
 
 type User = {
   id: string;
@@ -16,6 +16,7 @@ type AuthContextValue = {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateProfile: (body: { email: string; password?: string }) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -64,8 +65,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const updateProfile = useCallback(
+    async (body: { email: string; password?: string }) => {
+      if (!token) throw new Error('Not signed in');
+      const result = await apiPatchProfile(token, {
+        email: body.email.trim(),
+        ...(body.password && body.password.length > 0 ? { password: body.password } : {}),
+      });
+      setUser(result.user);
+      setToken(result.accessToken);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ user: result.user, token: result.accessToken }),
+        );
+      }
+    },
+    [token],
+  );
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,12 +1,20 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Trash2, X } from 'lucide-react';
 import { useAuth } from '../../lib/auth-context';
 import { apiPost, apiPostForm } from '../../lib/backend-api';
+import type { AmenityItem } from '../../lib/amenities';
+import { IconPicker } from '../../components/IconPicker';
+import { AmenityLucideIcon } from '../../components/AmenityLucideIcon';
 import { HeaderLink, PageIntro, SectionCard } from '../../ui/admin-ui';
 
 type FieldErrors = Record<string, string | undefined>;
+
+function fileKey(f: File) {
+  return `${f.name}-${f.size}-${f.lastModified}`;
+}
 
 export default function NewFarmPage() {
   const router = useRouter();
@@ -21,7 +29,8 @@ export default function NewFarmPage() {
   const [reviews, setReviews] = useState('');
   const [capacity, setCapacity] = useState('');
   const [featuresText, setFeaturesText] = useState('');
-  const [amenitiesText, setAmenitiesText] = useState('');
+  const [amenities, setAmenities] = useState<AmenityItem[]>([{ icon: 'Wifi', name: '' }]);
+  const [activeIconIndex, setActiveIconIndex] = useState<number | null>(null);
   const [facilitiesText, setFacilitiesText] = useState('');
   const [rulesText, setRulesText] = useState('');
   const [weekdayPrice, setWeekdayPrice] = useState('');
@@ -31,6 +40,17 @@ export default function NewFarmPage() {
   const [discount, setDiscount] = useState('');
   const [isPopular, setIsPopular] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+
+  const photoPreviewUrls = useMemo(
+    () => selectedFiles.map((f) => URL.createObjectURL(f)),
+    [selectedFiles],
+  );
+
+  useEffect(() => {
+    return () => {
+      photoPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [photoPreviewUrls]);
 
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -61,7 +81,8 @@ export default function NewFarmPage() {
     if (!originalPrice.trim()) errs.originalPrice = 'Original price is required.';
     if (!capacity.trim()) errs.capacity = 'Capacity is required.';
     if (!featuresText.trim()) errs.featuresText = 'At least one feature is required.';
-    if (!amenitiesText.trim()) errs.amenitiesText = 'At least one amenity is required.';
+    if (!amenities.some((a) => a.name.trim()))
+      errs.amenities = 'At least one amenity with a name is required.';
     if (!facilitiesText.trim()) errs.facilitiesText = 'Facilities are required.';
     if (!rulesText.trim()) errs.rulesText = 'Rules are required.';
     if (!weekdayPrice.trim()) errs.weekdayPrice = 'Weekday 24h price is required.';
@@ -90,9 +111,13 @@ export default function NewFarmPage() {
       if (selectedFiles.length > 0) {
         const formData = new FormData();
         selectedFiles.forEach((f) => formData.append('files', f));
-        
+
         try {
-          const uploadRes = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, formData);
+          const uploadRes = await apiPostForm<{ files: { url: string }[] }>(
+            '/uploads',
+            token,
+            formData,
+          );
           photoImageUrls = uploadRes.files.map((f) => f.url);
         } catch (err: any) {
           setFormError(err?.message ?? 'Failed to upload images');
@@ -111,10 +136,9 @@ export default function NewFarmPage() {
         .split(/[,\\n]/g)
         .map((s) => s.trim())
         .filter(Boolean);
-      const amenities = amenitiesText
-        .split(/[,\\n]/g)
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const amenitiesPayload = amenities
+        .filter((a) => a.name.trim())
+        .map((a) => ({ icon: a.icon, name: a.name.trim() }));
       const facilities = facilitiesText
         .split(/\\n/g)
         .map((s) => s.trim())
@@ -144,7 +168,7 @@ export default function NewFarmPage() {
             reviews: reviews.trim() ? Number(reviews.trim()) : undefined,
             capacity: capacity.trim(),
             features,
-            amenities,
+            amenities: amenitiesPayload,
             facilities,
             pricing,
             rules,
@@ -285,20 +309,59 @@ export default function NewFarmPage() {
             />
             {err('featuresText') && <span className="field-error-text">{err('featuresText')}</span>}
           </label>
-          <label className="full-width">
+          <div className="full-width field-stack">
             <span className="field-label">
-              Amenities (comma or new line) <span className="field-required">*</span>
+              Amenities <span className="field-required">*</span>
             </span>
-            <textarea
-              rows={2}
-              value={amenitiesText}
-              onChange={(e) => setAmenitiesText(e.target.value)}
-              className={err('amenitiesText') ? 'field-error' : ''}
-            />
-            {err('amenitiesText') && (
-              <span className="field-error-text">{err('amenitiesText')}</span>
-            )}
-          </label>
+            <p className="field-hint">Pick a Lucide icon and enter a label for each amenity.</p>
+            <div className="amenity-rows">
+              {amenities.map((item, idx) => (
+                <div key={idx} className="amenity-row">
+                  <button
+                    type="button"
+                    className={`amenity-icon-select${err('amenities') ? ' field-error' : ''}`}
+                    onClick={() => setActiveIconIndex(idx)}
+                  >
+                    <span className="amenity-icon-preview">
+                      <AmenityLucideIcon iconName={item.icon} size={20} />
+                    </span>
+                    <span className="amenity-icon-label">{item.icon}</span>
+                  </button>
+                  <input
+                    value={item.name}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setAmenities((prev) =>
+                        prev.map((a, i) => (i === idx ? { ...a, name: v } : a)),
+                      );
+                    }}
+                    placeholder="Amenity name"
+                    className={err('amenities') ? 'field-error' : ''}
+                  />
+                  <button
+                    type="button"
+                    className="amenity-row-remove"
+                    onClick={() =>
+                      setAmenities((prev) =>
+                        prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx),
+                      )
+                    }
+                    aria-label="Remove amenity"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="amenity-add-link"
+              onClick={() => setAmenities((prev) => [...prev, { icon: 'Wifi', name: '' }])}
+            >
+              + Add amenity
+            </button>
+            {err('amenities') && <span className="field-error-text">{err('amenities')}</span>}
+          </div>
           <label className="full-width">
             <span className="field-label">
               Facilities (one per line) <span className="field-required">*</span>
@@ -394,17 +457,53 @@ export default function NewFarmPage() {
               multiple
               accept="image/*"
               onChange={(e) => {
-                if (e.target.files) {
-                  setSelectedFiles(Array.from(e.target.files));
-                }
+                const list = e.target.files ? Array.from(e.target.files) : [];
+                e.target.value = '';
+                if (!list.length) return;
+                setSelectedFiles((prev) => {
+                  const keys = new Set(prev.map(fileKey));
+                  const next = [...prev];
+                  for (const f of list) {
+                    const k = fileKey(f);
+                    if (!keys.has(k)) {
+                      keys.add(k);
+                      next.push(f);
+                    }
+                  }
+                  return next;
+                });
               }}
               className={err('photos') ? 'field-error' : ''}
               style={{ padding: '8px 0' }}
             />
             {selectedFiles.length > 0 && (
-              <div style={{ marginTop: '8px', fontSize: '0.9em', color: '#64748b' }}>
-                {selectedFiles.length} file(s) selected
-              </div>
+              <>
+                <p className="field-hint" style={{ marginTop: '0.65rem' }}>
+                  {selectedFiles.length} image{selectedFiles.length === 1 ? '' : 's'} selected —
+                  click × to remove one.
+                </p>
+                <div className="photo-upload-preview-grid">
+                  {selectedFiles.map((file, index) => (
+                    <div key={`${fileKey(file)}-${index}`} className="photo-upload-preview-item">
+                      <button
+                        type="button"
+                        className="photo-upload-preview-remove"
+                        onClick={() =>
+                          setSelectedFiles((prev) => prev.filter((_, i) => i !== index))
+                        }
+                        aria-label={`Remove ${file.name}`}
+                      >
+                        <X size={16} strokeWidth={2.5} />
+                      </button>
+                      <img
+                        src={photoPreviewUrls[index]}
+                        alt=""
+                        className="photo-upload-preview-img"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
             {err('photos') && <span className="field-error-text">{err('photos')}</span>}
           </label>
@@ -416,6 +515,19 @@ export default function NewFarmPage() {
           </div>
         </form>
       </SectionCard>
+
+      {activeIconIndex !== null && amenities[activeIconIndex] && (
+        <IconPicker
+          value={amenities[activeIconIndex].icon}
+          onChange={(iconName) => {
+            setAmenities((prev) =>
+              prev.map((a, i) => (i === activeIconIndex ? { ...a, icon: iconName } : a)),
+            );
+            setActiveIconIndex(null);
+          }}
+          onClose={() => setActiveIconIndex(null)}
+        />
+      )}
     </div>
   );
 }

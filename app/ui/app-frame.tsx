@@ -4,12 +4,11 @@ import { ReactNode, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { Bell, Menu, Search, X } from 'lucide-react';
 import { Sidebar } from './sidebar';
-import { useAuth } from '../lib/auth-context';
+import { ProfileMenu } from './profile-menu';
 
 export function AppFrame({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { user } = useAuth();
 
   const isAuthPage = pathname === '/login';
 
@@ -64,15 +63,7 @@ export function AppFrame({ children }: { children: ReactNode }) {
             <button type="button" className="icon-btn" aria-label="Notifications">
               <Bell size={16} />
             </button>
-            {user ? (
-              <div className="topbar-profile">
-                <div className="topbar-profile__avatar">{user.name.slice(0, 1).toUpperCase()}</div>
-                <div className="topbar-profile__meta">
-                  <strong>{user.name}</strong>
-                  <span>{user.role}</span>
-                </div>
-              </div>
-            ) : null}
+            <ProfileMenu />
           </div>
         </header>
         <main className="app-main">{children}</main>

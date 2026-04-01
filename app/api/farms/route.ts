@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/prisma/client';
 import { Role } from '@prisma/client';
 import { requireAuth, requireRole } from '../_lib/auth';
+import { normalizeAmenitiesForStorage, type AmenityPayload } from '@/app/lib/amenities';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -15,6 +16,7 @@ export async function GET(req: NextRequest) {
     ? {
         OR: [
           { name: { contains: search, mode: 'insensitive' as const } },
+          { slug: { contains: search, mode: 'insensitive' as const } },
           { location: { contains: search, mode: 'insensitive' as const } },
           { description: { contains: search, mode: 'insensitive' as const } },
         ],
@@ -26,6 +28,7 @@ export async function GET(req: NextRequest) {
       where,
       skip,
       take: limit,
+      orderBy: [{ slug: { sort: 'asc', nulls: 'last' } }, { name: 'asc' }],
       include: {
         images: {
           select: {
@@ -72,7 +75,7 @@ export async function POST(req: NextRequest) {
       reviews?: number | null;
       capacity?: string | null;
       features?: string[];
-      amenities?: string[];
+      amenities?: AmenityPayload[];
       facilities?: string[];
       pricing?: any;
       rules?: string[];
@@ -94,21 +97,21 @@ export async function POST(req: NextRequest) {
 
   try {
     const created = await prisma.$transaction(async (tx) => {
-        const allSlugs = await tx.farm.findMany({
-          select: { slug: true },
-          where: { slug: { startsWith: 'HW' } }
-        });
-        
-        let currentMaxSlugNumber = 100;
-        for (const item of allSlugs) {
-          if (item.slug) {
-            const numStr = item.slug.replace('HW', '');
-            const num = parseInt(numStr, 10);
-            if (!isNaN(num) && num > currentMaxSlugNumber) {
-              currentMaxSlugNumber = num;
-            }
+      const allSlugs = await tx.farm.findMany({
+        select: { slug: true },
+        where: { slug: { startsWith: 'HW' } },
+      });
+
+      let currentMaxSlugNumber = 100;
+      for (const item of allSlugs) {
+        if (item.slug) {
+          const numStr = item.slug.replace('HW', '');
+          const num = parseInt(numStr, 10);
+          if (!isNaN(num) && num > currentMaxSlugNumber) {
+            currentMaxSlugNumber = num;
           }
         }
+      }
 
       const results = [];
       for (const f of body.farms!) {
@@ -145,7 +148,7 @@ export async function POST(req: NextRequest) {
               reviews: f.reviews ?? undefined,
               capacity: f.capacity ?? undefined,
               features: f.features ?? [],
-              amenities: f.amenities ?? [],
+              amenities: normalizeAmenitiesForStorage(f.amenities),
               facilities: f.facilities ?? [],
               pricing: f.pricing ?? undefined,
               rules: f.rules ?? [],

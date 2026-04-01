@@ -7,8 +7,8 @@ import { useAuth } from '../lib/auth-context';
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
-  const [email, setEmail] = useState('admin@farmhouse.local');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -56,7 +56,14 @@ export default function LoginPage() {
           <p>Use your existing admin credentials to continue to the workspace.</p>
           <label>
             <span className="field-label">Email</span>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="username"
+              required
+            />
           </label>
           <label>
             <span className="field-label">Password</span>
@@ -64,6 +71,8 @@ export default function LoginPage() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Your password"
+              autoComplete="current-password"
               required
             />
           </label>

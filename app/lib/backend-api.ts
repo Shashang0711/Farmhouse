@@ -17,6 +17,25 @@ export async function apiLogin(email: string, password: string) {
   return handleResponse<{ accessToken: string; user: any }>(res);
 }
 
+export type ProfileUser = {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+};
+
+export async function apiPatchProfile(token: string, body: { email?: string; password?: string }) {
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  return handleResponse<{ accessToken: string; user: ProfileUser }>(res);
+}
+
 export async function apiGet<T>(path: string, token: string | null) {
   const res = await fetch(`${API_BASE}${path}`, {
     headers: {
