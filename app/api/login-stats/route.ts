@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/prisma/client';
 
+/** DB-backed counts must not run during `next build` (GET routes are cached by default). */
+export const dynamic = 'force-dynamic';
+
 /**
  * Public aggregate counts for the login hero (no auth).
  * Intentionally limited to non-sensitive totals for the admin landing UI.
