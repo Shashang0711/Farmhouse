@@ -64,10 +64,11 @@ export default function PhotographyPage() {
     }
   }, [user, loading, router]);
 
-  const loadPhotos = async () => {
+  const loadPhotos = async (opts?: { bustCache?: boolean }) => {
     if (!token) return;
     try {
-      const data = await apiGet<Photo[]>('/photography', token);
+      const q = opts?.bustCache ? `?cb=${Date.now()}` : '';
+      const data = await apiGet<Photo[]>(`/photography${q}`, token);
       setPhotos(data);
     } catch (err: any) {
       setError(errorMessageFromUnknown(err, 'Failed to load photography'));
@@ -84,11 +85,15 @@ export default function PhotographyPage() {
     if (!token || !confirmDeleteId) return;
     setRowDeletingId(confirmDeleteId);
     setError(null);
+    const deletedId = confirmDeleteId;
     try {
-      await apiDelete(`/photography/${confirmDeleteId}`, token);
-      await loadPhotos();
+      await apiDelete(`/photography/${deletedId}`, token);
+      setPhotos((prev) => prev.filter((p) => p.id !== deletedId));
+      await loadPhotos({ bustCache: true });
+      router.refresh();
     } catch (err: unknown) {
       setError(errorMessageFromUnknown(err, 'Failed to delete photography'));
+      void loadPhotos({ bustCache: true });
     } finally {
       setRowDeletingId(null);
       setConfirmDeleteId(null);

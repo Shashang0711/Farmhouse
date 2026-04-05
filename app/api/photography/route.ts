@@ -3,6 +3,8 @@ import { prisma } from '@/prisma/client';
 import { Role } from '@prisma/client';
 import { requireAuth, requireRole } from '../_lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     requireAuth(req);

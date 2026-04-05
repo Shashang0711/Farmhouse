@@ -7,7 +7,7 @@ type ConfirmDialogProps = {
   confirmText?: string;
   cancelText?: string;
   loading?: boolean;
-  onConfirm: () => void;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 };
 
@@ -34,7 +34,12 @@ export default function ConfirmDialog({
             {cancelText}
           </button>
 
-          <button className="confirm" onClick={onConfirm} disabled={loading}>
+          <button
+            className="confirm"
+            type="button"
+            onClick={() => void Promise.resolve(onConfirm())}
+            disabled={loading}
+          >
             {loading ? 'Processing...' : confirmText}
           </button>
         </div>

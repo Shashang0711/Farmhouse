@@ -70,10 +70,11 @@ export default function DecorationsPage() {
     }
   }, [user, loading, router]);
 
-  const loadDecorations = async () => {
+  const loadDecorations = async (opts?: { bustCache?: boolean }) => {
     if (!token) return;
     try {
-      const data = await apiGet<Decoration[]>('/decorations', token);
+      const q = opts?.bustCache ? `?cb=${Date.now()}` : '';
+      const data = await apiGet<Decoration[]>(`/decorations${q}`, token);
       setDecorations(data);
     } catch (err: any) {
       setError(errorMessageFromUnknown(err, 'Failed to load decorations'));
@@ -90,11 +91,15 @@ export default function DecorationsPage() {
     if (!token || !confirmDeleteId) return;
     setRowDeletingId(confirmDeleteId);
     setError(null);
+    const deletedId = confirmDeleteId;
     try {
-      await apiDelete(`/decorations/${confirmDeleteId}`, token);
-      await loadDecorations();
+      await apiDelete(`/decorations/${deletedId}`, token);
+      setDecorations((prev) => prev.filter((d) => d.id !== deletedId));
+      await loadDecorations({ bustCache: true });
+      router.refresh();
     } catch (err: unknown) {
       setError(errorMessageFromUnknown(err, 'Failed to delete decoration'));
+      void loadDecorations({ bustCache: true });
     } finally {
       setRowDeletingId(null);
       setConfirmDeleteId(null);
