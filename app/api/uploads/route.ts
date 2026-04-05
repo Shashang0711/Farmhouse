@@ -4,6 +4,7 @@ import { Role } from '@prisma/client';
 import path from 'path';
 import { mkdir, writeFile } from 'fs/promises';
 import crypto from 'crypto';
+import { uploadImageToS3, useS3Upload } from '@/app/lib/upload-storage';
 
 export const runtime = 'nodejs';
 
@@ -38,13 +39,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'files are required' }, { status: 400 });
   }
 
-  // Basic guardrails to avoid abuse
   const maxFiles = 50;
   if (files.length > maxFiles) {
     return NextResponse.json({ message: `Too many files (max ${maxFiles}).` }, { status: 400 });
   }
 
-  await mkdir(UPLOAD_DIR, { recursive: true });
+  const s3 = useS3Upload();
+  if (!s3) {
+    await mkdir(UPLOAD_DIR, { recursive: true });
+  }
 
   const uploaded: { url: string; name: string; size: number; type: string }[] = [];
 
@@ -56,10 +59,23 @@ export async function POST(req: NextRequest) {
     const buf = Buffer.from(await file.arrayBuffer());
     const ext = safeExtFromFile(file) || '.img';
     const filename = `${crypto.randomUUID()}${ext}`;
-    const diskPath = path.join(UPLOAD_DIR, filename);
-    await writeFile(diskPath, buf);
+    const objectKey = `uploads/${filename}`;
+
+    let url: string;
+    if (s3) {
+      url = await uploadImageToS3({
+        body: buf,
+        contentType: file.type,
+        objectKey,
+      });
+    } else {
+      const diskPath = path.join(UPLOAD_DIR, filename);
+      await writeFile(diskPath, buf);
+      url = `/uploads/${filename}`;
+    }
+
     uploaded.push({
-      url: `/uploads/${filename}`,
+      url,
       name: file.name,
       size: file.size,
       type: file.type,
