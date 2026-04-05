@@ -7,6 +7,7 @@ import { FileUploadControl } from '../../../components/FileUploadControl';
 import { errorMessageFromUnknown } from '../../../lib/api-errors';
 import { useAuth } from '../../../lib/auth-context';
 import { apiGet, apiPatch, apiPostForm } from '../../../lib/backend-api';
+import { mediaSrc } from '../../../lib/media-url';
 import { HeaderLink, PageIntro, SectionCard } from '../../../ui/admin-ui';
 
 type DecorationImage = { id: string; imageUrl: string };
@@ -157,7 +158,7 @@ export default function EditDecorationPage({ params }: { params: { id: string } 
                 <div className="preview-thumb-row">
                   <div className="preview-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={thumbnailUrl} alt="" />
+                    <img src={mediaSrc(thumbnailUrl)} alt="" />
                     <button
                       type="button"
                       className="preview-thumb-remove"
@@ -213,7 +214,7 @@ export default function EditDecorationPage({ params }: { params: { id: string } 
                 {galleryUrls.map((url, i) => (
                   <div key={`${url}-${i}`} className="preview-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt="" />
+                    <img src={mediaSrc(url)} alt="" />
                     <button
                       type="button"
                       className="preview-thumb-remove"

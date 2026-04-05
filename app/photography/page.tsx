@@ -9,6 +9,7 @@ import ConfirmDialog from '../ components/ConfirmDialog';
 import { errorMessageFromUnknown } from '../lib/api-errors';
 import { useAuth } from '../lib/auth-context';
 import { apiDelete, apiGet, apiPost, apiPostForm } from '../lib/backend-api';
+import { mediaSrc } from '../lib/media-url';
 import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
 
 type PhotographyImage = {
@@ -289,7 +290,7 @@ export default function PhotographyPage() {
                       {p.thumbnailUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img
-                          src={p.thumbnailUrl}
+                          src={mediaSrc(p.thumbnailUrl)}
                           alt="thumbnail"
                           style={{ height: 40, width: 40, objectFit: 'cover' }}
                         />

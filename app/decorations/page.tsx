@@ -9,6 +9,7 @@ import ConfirmDialog from '../ components/ConfirmDialog';
 import { errorMessageFromUnknown } from '../lib/api-errors';
 import { useAuth } from '../lib/auth-context';
 import { apiDelete, apiGet, apiPost, apiPostForm } from '../lib/backend-api';
+import { mediaSrc } from '../lib/media-url';
 import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
 
 type DecorationImage = {
@@ -297,7 +298,7 @@ export default function DecorationsPage() {
                       <td className="cell-subtle">
                         {d.thumbnailUrl ? (
                           <img
-                            src={d.thumbnailUrl}
+                            src={mediaSrc(d.thumbnailUrl)}
                             alt="thumbnail"
                             style={{ height: 40, width: 40, objectFit: 'cover' }}
                           />

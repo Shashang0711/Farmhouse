@@ -45,6 +45,16 @@ export async function POST(req: NextRequest) {
   }
 
   const s3 = useS3Upload();
+  if (!s3 && process.env.RENDER === 'true') {
+    return NextResponse.json(
+      {
+        message:
+          'Uploads on this host require S3. On Render, set S3_UPLOAD_BUCKET, AWS_ACCESS_KEY_ID, and AWS_SECRET_ACCESS_KEY (and optional AWS_REGION, S3_PUBLIC_BASE_URL). Disk uploads are not persisted.',
+      },
+      { status: 503 },
+    );
+  }
+
   if (!s3) {
     await mkdir(UPLOAD_DIR, { recursive: true });
   }

@@ -8,6 +8,7 @@ import { useAuth } from '../../lib/auth-context';
 import { apiGet } from '../../lib/backend-api';
 import { parseStoredAmenity } from '../../lib/amenities';
 import { AmenityLucideIcon } from '../../components/AmenityLucideIcon';
+import { mediaSrc } from '../../lib/media-url';
 import { HeaderLink, PageIntro, SectionCard, StatCard } from '../../ui/admin-ui';
 
 type FarmImageRow = { id: string; imageUrl: string; farmId: string };
@@ -116,7 +117,7 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
                     onClick={() => setLightboxIndex(index)}
                     aria-label={`Open photo ${index + 1} of ${farm.images!.length}`}
                   >
-                    <img src={img.imageUrl} alt="" loading="lazy" decoding="async" />
+                    <img src={mediaSrc(img.imageUrl)} alt="" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>
@@ -285,7 +286,7 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
                   >
                     <ChevronLeft size={24} />
                   </button>
-                  <img src={farm.images[lightboxIndex].imageUrl} alt="" />
+                  <img src={mediaSrc(farm.images[lightboxIndex].imageUrl)} alt="" />
                   <button
                     type="button"
                     className="farm-photo-lightbox-nav"

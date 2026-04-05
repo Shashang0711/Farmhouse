@@ -15,6 +15,9 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
  * Local dev: leave S3 unset to write under public/uploads and return /uploads/...
  *
  * Bucket policy must allow public GetObject on the uploads/* prefix (or use a CDN).
+ *
+ * For rows still storing `/uploads/...`, set NEXT_PUBLIC_MEDIA_BASE_URL in the Next.js
+ * build to the same public object origin (no trailing slash) so the UI resolves them.
  */
 
 const DEFAULT_REGION = 'ap-south-1';

@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { errorMessageFromUnknown } from '../../lib/api-errors';
 import { useAuth } from '../../lib/auth-context';
 import { apiGet } from '../../lib/backend-api';
+import { mediaSrc } from '../../lib/media-url';
 import { HeaderLink, PageIntro, SectionCard, StatCard } from '../../ui/admin-ui';
 
 type DecorationImage = { id: string; imageUrl: string };
@@ -101,7 +102,7 @@ export default function DecorationDetailPage({ params }: { params: { id: string 
             {row.thumbnailUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={row.thumbnailUrl}
+                src={mediaSrc(row.thumbnailUrl)}
                 alt=""
                 style={{ maxWidth: 280, borderRadius: 16, border: '1px solid var(--border)' }}
               />
@@ -127,7 +128,7 @@ export default function DecorationDetailPage({ params }: { params: { id: string 
                     aria-label={`Open photo ${index + 1} of ${row.images!.length}`}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img.imageUrl} alt="" loading="lazy" decoding="async" />
+                    <img src={mediaSrc(img.imageUrl)} alt="" loading="lazy" decoding="async" />
                   </button>
                 ))}
               </div>
@@ -169,7 +170,7 @@ export default function DecorationDetailPage({ params }: { params: { id: string 
                     <ChevronLeft size={24} />
                   </button>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={row.images[lightboxIndex].imageUrl} alt="" />
+                  <img src={mediaSrc(row.images[lightboxIndex].imageUrl)} alt="" />
                   <button
                     type="button"
                     className="farm-photo-lightbox-nav"
