@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Trash2, X } from 'lucide-react';
 import { errorMessageFromUnknown } from '../../lib/api-errors';
 import { useAuth } from '../../lib/auth-context';
-import { apiPost, apiPostForm } from '../../lib/backend-api';
+import { uploadAdminImageFiles } from '../../lib/admin-image-upload';
+import { apiPost } from '../../lib/backend-api';
 import type { AmenityItem } from '../../lib/amenities';
 import { IconPicker } from '../../components/IconPicker';
 import { AmenityLucideIcon } from '../../components/AmenityLucideIcon';
@@ -111,16 +112,8 @@ export default function NewFarmPage() {
       let photoImageUrls: string[] = [];
 
       if (selectedFiles.length > 0) {
-        const formData = new FormData();
-        selectedFiles.forEach((f) => formData.append('files', f));
-
         try {
-          const uploadRes = await apiPostForm<{ files: { url: string }[] }>(
-            '/uploads',
-            token,
-            formData,
-          );
-          photoImageUrls = uploadRes.files.map((f) => f.url);
+          photoImageUrls = await uploadAdminImageFiles(token, selectedFiles, 'farms');
         } catch (err: any) {
           setFormError(errorMessageFromUnknown(err, 'Failed to upload images'));
           setSubmitting(false);

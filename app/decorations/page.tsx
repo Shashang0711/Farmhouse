@@ -8,7 +8,8 @@ import { FileUploadControl } from '../components/FileUploadControl';
 import ConfirmDialog from '../ components/ConfirmDialog';
 import { errorMessageFromUnknown } from '../lib/api-errors';
 import { useAuth } from '../lib/auth-context';
-import { apiDelete, apiGet, apiPost, apiPostForm } from '../lib/backend-api';
+import { uploadAdminImageFile, uploadAdminImageFiles } from '../lib/admin-image-upload';
+import { apiDelete, apiGet, apiPost } from '../lib/backend-api';
 import { mediaSrc } from '../lib/media-url';
 import { PageIntro, SectionCard, StatCard } from '../ui/admin-ui';
 
@@ -110,20 +111,15 @@ export default function DecorationsPage() {
       const finalImageUrls: string[] = [];
 
       if (thumbnailFile) {
-        const formData = new FormData();
-        formData.append('files', thumbnailFile);
-        const res = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, formData);
-        finalThumbnailUrl = res.files[0].url;
+        finalThumbnailUrl = await uploadAdminImageFile(token, thumbnailFile, 'decorations');
       }
 
       if (imageFiles.length > 0) {
         if (imageFiles.length < 10) {
           throw new Error('At least 10 images are required');
         }
-        const formData = new FormData();
-        imageFiles.forEach((f) => formData.append('files', f));
-        const res = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, formData);
-        res.files.forEach((f) => finalImageUrls.push(f.url));
+        const urls = await uploadAdminImageFiles(token, imageFiles, 'decorations');
+        finalImageUrls.push(...urls);
       }
 
       await apiPost<Decoration>('/decorations', token, {

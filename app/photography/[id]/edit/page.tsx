@@ -6,7 +6,8 @@ import { X } from 'lucide-react';
 import { FileUploadControl } from '../../../components/FileUploadControl';
 import { errorMessageFromUnknown } from '../../../lib/api-errors';
 import { useAuth } from '../../../lib/auth-context';
-import { apiGet, apiPatch, apiPostForm } from '../../../lib/backend-api';
+import { uploadAdminImageFile, uploadAdminImageFiles } from '../../../lib/admin-image-upload';
+import { apiGet, apiPatch } from '../../../lib/backend-api';
 import { mediaSrc } from '../../../lib/media-url';
 import { HeaderLink, PageIntro, SectionCard } from '../../../ui/admin-ui';
 
@@ -97,10 +98,8 @@ export default function EditPhotographyPage({ params }: { params: { id: string }
     try {
       let mergedUrls = [...galleryUrls];
       if (newGalleryFiles.length > 0) {
-        const fd = new FormData();
-        newGalleryFiles.forEach((f) => fd.append('files', f));
-        const res = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, fd);
-        mergedUrls = [...mergedUrls, ...res.files.map((f) => f.url)];
+        const newUrls = await uploadAdminImageFiles(token, newGalleryFiles, 'photography');
+        mergedUrls = [...mergedUrls, ...newUrls];
       }
 
       if (mergedUrls.length > 0 && mergedUrls.length < 10) {
@@ -114,10 +113,7 @@ export default function EditPhotographyPage({ params }: { params: { id: string }
       } = { title, images: mergedUrls };
 
       if (newThumbFile) {
-        const fd = new FormData();
-        fd.append('files', newThumbFile);
-        const res = await apiPostForm<{ files: { url: string }[] }>('/uploads', token, fd);
-        body.thumbnailUrl = res.files[0]?.url;
+        body.thumbnailUrl = await uploadAdminImageFile(token, newThumbFile, 'photography');
       } else if (thumbRemoved) {
         body.thumbnailUrl = null;
       }

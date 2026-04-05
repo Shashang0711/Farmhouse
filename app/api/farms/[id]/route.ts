@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/prisma/client';
 import { Role } from '@prisma/client';
+import { deleteStoredImagesFromS3 } from '@/app/lib/upload-storage';
 import { requireAuth, requireRole } from '../../_lib/auth';
 import { normalizeAmenitiesForStorage, type AmenityPayload } from '@/app/lib/amenities';
 
@@ -94,11 +95,22 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   }
 
   try {
+    const farm = await prisma.farm.findUnique({
+      where: { id: params.id },
+      include: { images: true },
+    });
+    if (!farm) {
+      return NextResponse.json({ message: 'Farm not found' }, { status: 404 });
+    }
+    const urls = farm.images.map((i) => i.imageUrl);
+
     await prisma.$transaction(async (tx) => {
       await tx.farm.delete({ where: { id: params.id } });
     });
 
-    return new NextResponse(null, { status: 204 }); // ✅ FIXED
+    await deleteStoredImagesFromS3(urls);
+
+    return new NextResponse(null, { status: 204 });
   } catch (err: any) {
     return NextResponse.json({ message: err?.message ?? 'Failed to delete farm' }, { status: 400 });
   }

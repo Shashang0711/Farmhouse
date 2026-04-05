@@ -35,6 +35,13 @@ export async function POST(req: NextRequest) {
   const form = await req.formData();
   const files = form.getAll('files').filter((v): v is File => v instanceof File);
 
+  const allowedFolders = new Set(['photography', 'decorations', 'farms']);
+  const folderRaw = form.get('folder');
+  const folder =
+    typeof folderRaw === 'string' && allowedFolders.has(folderRaw.trim())
+      ? folderRaw.trim()
+      : '';
+
   if (!files.length) {
     return NextResponse.json({ message: 'files are required' }, { status: 400 });
   }
@@ -55,10 +62,6 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (!s3) {
-    await mkdir(UPLOAD_DIR, { recursive: true });
-  }
-
   const uploaded: { url: string; name: string; size: number; type: string }[] = [];
 
   for (const file of files) {
@@ -69,7 +72,7 @@ export async function POST(req: NextRequest) {
     const buf = Buffer.from(await file.arrayBuffer());
     const ext = safeExtFromFile(file) || '.img';
     const filename = `${crypto.randomUUID()}${ext}`;
-    const objectKey = `uploads/${filename}`;
+    const objectKey = folder ? `uploads/${folder}/${filename}` : `uploads/${filename}`;
 
     let url: string;
     if (s3) {
@@ -79,9 +82,11 @@ export async function POST(req: NextRequest) {
         objectKey,
       });
     } else {
-      const diskPath = path.join(UPLOAD_DIR, filename);
+      const diskDir = folder ? path.join(UPLOAD_DIR, folder) : UPLOAD_DIR;
+      await mkdir(diskDir, { recursive: true });
+      const diskPath = path.join(diskDir, filename);
       await writeFile(diskPath, buf);
-      url = `/uploads/${filename}`;
+      url = folder ? `/uploads/${folder}/${filename}` : `/uploads/${filename}`;
     }
 
     uploaded.push({

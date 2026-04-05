@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/prisma/client';
 import { Role } from '@prisma/client';
+import {
+  deleteStoredImagesFromS3,
+  removedImageUrlsAfterPatch,
+} from '@/app/lib/upload-storage';
 import { requireAuth, requireRole } from '../../_lib/auth';
 
 type Params = { params: { id: string } };
@@ -43,6 +47,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ message: 'At least 10 images are required' }, { status: 400 });
   }
 
+  const existing = await prisma.photography.findUnique({
+    where: { id: params.id },
+    include: { images: true },
+  });
+  if (!existing) {
+    return NextResponse.json({ message: 'Photography not found' }, { status: 404 });
+  }
+
+  const toRemoveFromS3 = removedImageUrlsAfterPatch({
+    oldThumbnailUrl: existing.thumbnailUrl,
+    oldImageUrls: existing.images.map((i) => i.imageUrl),
+    newThumbnailUrl: body.thumbnailUrl,
+    newImageUrls: imagesData,
+  });
+
   const photo = await prisma.photography.update({
     where: { id: params.id },
     data: {
@@ -60,6 +79,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     include: { images: true },
   });
 
+  await deleteStoredImagesFromS3(toRemoveFromS3);
+
   return NextResponse.json(photo);
 }
 
@@ -73,6 +94,21 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     );
   }
 
+  const existing = await prisma.photography.findUnique({
+    where: { id: params.id },
+    include: { images: true },
+  });
+  if (!existing) {
+    return NextResponse.json({ message: 'Photography not found' }, { status: 404 });
+  }
+
+  const urls = [
+    ...existing.images.map((i) => i.imageUrl),
+    ...(existing.thumbnailUrl ? [existing.thumbnailUrl] : []),
+  ];
+
   await prisma.photography.delete({ where: { id: params.id } });
+  await deleteStoredImagesFromS3(urls);
+
   return NextResponse.json(null, { status: 204 });
 }
