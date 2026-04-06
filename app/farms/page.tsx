@@ -111,7 +111,7 @@ export default function FarmsPage() {
     <div className="page">
       <PageIntro
         eyebrow="Catalog"
-        title="Farm listings"
+        title="Farms"
         description="Review every property, inspect listing quality, and manage edits from one streamlined table."
         actions={
           isAdmin ? (

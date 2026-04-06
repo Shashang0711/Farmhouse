@@ -206,7 +206,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
     <div className="page">
       <PageIntro
         eyebrow="Catalog"
-        title="Edit farmhouse listing"
+        title="Edit farmhouse"
         description="Update listing presentation details while keeping the existing patch logic exactly intact."
         actions={<HeaderLink href="/farms">Back to list</HeaderLink>}
       />

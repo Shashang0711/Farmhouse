@@ -192,7 +192,7 @@ export default function NewFarmPage() {
     <div className="page">
       <PageIntro
         eyebrow="Catalog"
-        title="Create farmhouse listing"
+        title="Create farmhouse"
         description="Enter a complete property profile with the same creation workflow and validations already in place."
         actions={<HeaderLink href="/farms">Back to list</HeaderLink>}
       />
