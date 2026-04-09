@@ -6,7 +6,7 @@ import { Trash2, X } from 'lucide-react';
 import { errorMessageFromUnknown } from '../../../lib/api-errors';
 import { useAuth } from '../../../lib/auth-context';
 import { apiGet, apiPatch } from '../../../lib/backend-api';
-import { uploadAdminImageFile } from '../../../lib/admin-image-upload';
+import { uploadAdminImageFile, uploadAdminImageFiles } from '../../../lib/admin-image-upload';
 import { collectEditFarmFieldErrors, type FarmFormStrings } from '../../../lib/farm-validation';
 import { parseStoredAmenity, type AmenityItem } from '../../../lib/amenities';
 import { IconPicker } from '../../../components/IconPicker';
@@ -14,6 +14,8 @@ import { AmenityLucideIcon } from '../../../components/AmenityLucideIcon';
 import { FileUploadControl } from '../../../components/FileUploadControl';
 import { mediaSrc } from '../../../lib/media-url';
 import { HeaderLink, PageIntro, SectionCard } from '../../../ui/admin-ui';
+
+type FarmImageRow = { id: string; imageUrl: string; farmId: string };
 
 type FarmDetail = {
   id: string;
@@ -37,7 +39,12 @@ type FarmDetail = {
   weekdayPrice?: string;
   weekendPrice?: string;
   thumbnailUrl?: string | null;
+  images?: FarmImageRow[];
 };
+
+function fileKey(f: File) {
+  return `${f.name}-${f.size}-${f.lastModified}`;
+}
 
 type FieldErrors = Record<string, string | undefined>;
 
@@ -72,16 +79,26 @@ export default function EditFarmPage({ params }: { params: { slug: string } }) {
   const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
   const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
 
+  const [galleryImages, setGalleryImages] = useState<FarmImageRow[]>([]);
+  const [newGalleryFiles, setNewGalleryFiles] = useState<File[]>([]);
+  const [galleryTouched, setGalleryTouched] = useState(false);
+
   const thumbnailPreviewUrl = useMemo(
     () => (thumbnailFile ? URL.createObjectURL(thumbnailFile) : null),
     [thumbnailFile],
   );
 
+  const newGalleryPreviewUrls = useMemo(
+    () => newGalleryFiles.map((f) => URL.createObjectURL(f)),
+    [newGalleryFiles],
+  );
+
   useEffect(() => {
     return () => {
       if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
+      newGalleryPreviewUrls.forEach((u) => URL.revokeObjectURL(u));
     };
-  }, [thumbnailPreviewUrl]);
+  }, [thumbnailPreviewUrl, newGalleryPreviewUrls]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -122,6 +139,9 @@ export default function EditFarmPage({ params }: { params: { slug: string } }) {
         setIsPopular(Boolean(data.isPopular));
         setExistingThumbnailUrl(data.thumbnailUrl ?? null);
         setThumbnailFile(null);
+        setGalleryImages(data.images ?? []);
+        setNewGalleryFiles([]);
+        setGalleryTouched(false);
       } catch (err: any) {
         setFormError(errorMessageFromUnknown(err, 'Failed to load farm'));
       } finally {
@@ -205,6 +225,30 @@ export default function EditFarmPage({ params }: { params: { slug: string } }) {
             }
           : undefined;
 
+      const keptUrls = galleryImages.map((i) => i.imageUrl);
+      let uploadedGalleryUrls: string[] = [];
+      if (newGalleryFiles.length > 0) {
+        try {
+          uploadedGalleryUrls = await uploadAdminImageFiles(token, newGalleryFiles, 'farms');
+        } catch (err: any) {
+          setFormError(errorMessageFromUnknown(err, 'Failed to upload gallery images'));
+          setSubmitting(false);
+          return;
+        }
+      }
+      const galleryUrls = [...keptUrls, ...uploadedGalleryUrls];
+      const shouldUpdateGallery =
+        galleryTouched || newGalleryFiles.length > 0;
+      if (shouldUpdateGallery) {
+        if (galleryUrls.length < 10) {
+          setFormError(
+            'Gallery must have at least 10 images. Add more files or remove fewer photos.',
+          );
+          setSubmitting(false);
+          return;
+        }
+      }
+
       await apiPatch(`/farms/${params.slug}`, token, {
         name: name.trim(),
         location: location.trim(),
@@ -226,6 +270,7 @@ export default function EditFarmPage({ params }: { params: { slug: string } }) {
         weekdayPrice: weekdayPrice.trim(),
         weekendPrice: weekendPrice.trim(),
         ...(thumbnailImageUrl !== undefined ? { thumbnailImageUrl } : {}),
+        ...(shouldUpdateGallery ? { photoImageUrls: galleryUrls } : {}),
       });
 
       router.push('/farms');
@@ -516,6 +561,90 @@ export default function EditFarmPage({ params }: { params: { slug: string } }) {
                 <span>Highlight this listing in the customer experience</span>
               </span>
             </label>
+
+            <div className="form-field full-width">
+              <span className="field-label">Gallery photos</span>
+              <p className="field-hint">
+                Remove images with × or add new files below. If you change the gallery, the listing
+                must still have at least 10 photos total after save.
+              </p>
+              {galleryImages.length > 0 && (
+                <div className="photo-upload-preview-grid" style={{ marginTop: '0.65rem' }}>
+                  {galleryImages.map((img) => (
+                    <div key={img.id} className="photo-upload-preview-item">
+                      <button
+                        type="button"
+                        className="photo-upload-preview-remove"
+                        onClick={() => {
+                          setGalleryImages((prev) => prev.filter((x) => x.id !== img.id));
+                          setGalleryTouched(true);
+                        }}
+                        aria-label="Remove gallery image"
+                      >
+                        <X size={16} strokeWidth={2.5} />
+                      </button>
+                      <img
+                        src={mediaSrc(img.imageUrl)}
+                        alt=""
+                        className="photo-upload-preview-img"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+              <FileUploadControl
+                multiple
+                accept="image/*"
+                prompt="Add more gallery photos"
+                hint="Selected files are uploaded when you save. Combined with kept photos, you need at least 10."
+                aria-label="Add farm gallery photos"
+                onFilesPicked={(list) => {
+                  if (!list.length) return;
+                  setNewGalleryFiles((prev) => {
+                    const keys = new Set(prev.map(fileKey));
+                    const next = [...prev];
+                    for (const f of list) {
+                      const k = fileKey(f);
+                      if (!keys.has(k)) {
+                        keys.add(k);
+                        next.push(f);
+                      }
+                    }
+                    return next;
+                  });
+                  setGalleryTouched(true);
+                }}
+              />
+              {newGalleryFiles.length > 0 && (
+                <>
+                  <p className="field-hint" style={{ marginTop: '0.65rem' }}>
+                    {newGalleryFiles.length} new image{newGalleryFiles.length === 1 ? '' : 's'} to
+                    upload on save — click × to remove.
+                  </p>
+                  <div className="photo-upload-preview-grid">
+                    {newGalleryFiles.map((file, index) => (
+                      <div key={`${fileKey(file)}-${index}`} className="photo-upload-preview-item">
+                        <button
+                          type="button"
+                          className="photo-upload-preview-remove"
+                          onClick={() =>
+                            setNewGalleryFiles((prev) => prev.filter((_, i) => i !== index))
+                          }
+                          aria-label={`Remove ${file.name}`}
+                        >
+                          <X size={16} strokeWidth={2.5} />
+                        </button>
+                        <img
+                          src={newGalleryPreviewUrls[index]}
+                          alt=""
+                          className="photo-upload-preview-img"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
 
             <div className="form-field full-width">
               <span className="field-label">Thumbnail</span>

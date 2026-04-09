@@ -210,7 +210,7 @@ export default function FarmsPage() {
                     <td className="table-actions-cell">
                       <div className="table-actions">
                         <Link
-                          href={`/farms/${farm.id}`}
+                          href={`/farms/${farm.slug ?? farm.id}`}
                           className="table-action-btn"
                           title="View"
                           aria-label="View"
@@ -221,7 +221,7 @@ export default function FarmsPage() {
                         {isAdmin ? (
                           <>
                             <Link
-                              href={`/farms/${farm.id}/edit`}
+                              href={`/farms/${farm.slug ?? farm.id}/edit`}
                               className="table-action-btn"
                               title="Edit"
                               aria-label="Edit"
@@ -234,7 +234,9 @@ export default function FarmsPage() {
                               className="table-action-btn table-action-btn--danger"
                               title="Delete"
                               aria-label="Delete"
-                                onClick={() => setConfirmDeleteSlug(farm.slug ?? null)}
+                                onClick={() =>
+                                  setConfirmDeleteSlug(farm.slug ?? farm.id)
+                                }
                             >
                               <Trash2 size={16} strokeWidth={2.25} />
                             </button>

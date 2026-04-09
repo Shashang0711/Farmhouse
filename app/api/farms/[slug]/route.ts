@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/prisma/client';
 import { Role } from '@prisma/client';
 import { deleteStoredImagesFromS3 } from '@/app/lib/upload-storage';
@@ -6,7 +7,14 @@ import { requireAuth, requireRole } from '../../_lib/auth';
 import { normalizeAmenitiesForStorage, type AmenityPayload } from '@/app/lib/amenities';
 import { validateFarmUpdatePayload } from '@/app/lib/farm-validation';
 
-type Params = { params: { id: string } };
+type Params = { params: { slug: string } };
+
+/** URL segment can be catalog slug (e.g. HW101) or legacy UUID id. */
+function whereSlugOrId(segment: string): Prisma.FarmWhereInput {
+  return {
+    OR: [{ slug: segment }, { id: segment }],
+  };
+}
 
 /** Matches DB row for delete cleanup; Prisma client types may lag after schema changes. */
 type FarmDeleteMedia = {
@@ -15,8 +23,8 @@ type FarmDeleteMedia = {
 };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const farm = await prisma.farm.findUnique({
-    where: { id: params.id },
+  const farm = await prisma.farm.findFirst({
+    where: whereSlugOrId(params.slug),
     include: {
       images: { select: { id: true, imageUrl: true, farmId: true } },
     },
@@ -58,6 +66,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     weekdayPrice?: string | null;
     weekendPrice?: string | null;
     thumbnailImageUrl?: string | null;
+    /** When set, replaces all gallery images (FarmImage rows). Min 10 URLs expected for listings. */
+    photoImageUrls?: string[] | null;
   };
 
   const updateErr = validateFarmUpdatePayload({
@@ -83,8 +93,40 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ message: updateErr }, { status: 400 });
   }
 
+  const existing = await prisma.farm.findFirst({
+    where: whereSlugOrId(params.slug),
+    select: { id: true },
+  });
+  if (!existing) {
+    return NextResponse.json({ message: 'Farm not found' }, { status: 404 });
+  }
+
+  if (body.photoImageUrls !== undefined && body.photoImageUrls !== null) {
+    const newUrls = (Array.isArray(body.photoImageUrls) ? body.photoImageUrls : [])
+      .map((u) => (typeof u === 'string' ? u.trim() : ''))
+      .filter(Boolean);
+    if (newUrls.length < 10) {
+      return NextResponse.json(
+        { message: 'Gallery must include at least 10 image URLs when updating photos.' },
+        { status: 400 },
+      );
+    }
+    const before = await prisma.farm.findUnique({
+      where: { id: existing.id },
+      include: { images: true },
+    });
+    if (!before) {
+      return NextResponse.json({ message: 'Farm not found' }, { status: 404 });
+    }
+    const oldUrls = before.images.map((i) => i.imageUrl);
+    const removed = oldUrls.filter((u) => !newUrls.includes(u));
+    if (removed.length) {
+      await deleteStoredImagesFromS3(removed);
+    }
+  }
+
   const farm = await prisma.farm.update({
-    where: { id: params.id },
+    where: { id: existing.id },
     data: {
       ...(body.name !== undefined ? { name: body.name } : {}),
       ...(body.location !== undefined ? { location: body.location } : {}),
@@ -117,6 +159,20 @@ export async function PATCH(req: NextRequest, { params }: Params) {
                 : String(body.thumbnailImageUrl).trim(),
           }
         : {}),
+      ...(body.photoImageUrls !== undefined && body.photoImageUrls !== null
+        ? {
+            images: {
+              deleteMany: {},
+              create: (Array.isArray(body.photoImageUrls) ? body.photoImageUrls : [])
+                .map((u) => (typeof u === 'string' ? u.trim() : ''))
+                .filter(Boolean)
+                .map((imageUrl) => ({ imageUrl })),
+            },
+          }
+        : {}),
+    },
+    include: {
+      images: { select: { id: true, imageUrl: true, farmId: true } },
     },
   });
 
@@ -134,10 +190,10 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   }
 
   try {
-    const farm = (await prisma.farm.findUnique({
-      where: { id: params.id },
+    const farm = (await prisma.farm.findFirst({
+      where: whereSlugOrId(params.slug),
       include: { images: true },
-    })) as FarmDeleteMedia | null;
+    })) as (FarmDeleteMedia & { id: string }) | null;
     if (!farm) {
       return NextResponse.json({ message: 'Farm not found' }, { status: 404 });
     }
@@ -147,7 +203,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     ];
 
     await prisma.$transaction(async (tx) => {
-      await tx.farm.delete({ where: { id: params.id } });
+      await tx.farm.delete({ where: { id: farm.id } });
     });
 
     await deleteStoredImagesFromS3(urls);
