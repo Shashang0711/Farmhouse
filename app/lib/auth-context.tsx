@@ -1,7 +1,9 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useState, ReactNode } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { apiLogin, apiPatchProfile } from './backend-api';
+import { FARMHOUSE_SESSION_UNAUTHORIZED } from './auth-session-events';
 
 type User = {
   id: string;
@@ -24,6 +26,8 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 const STORAGE_KEY = 'farmhouse-auth';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +68,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       window.localStorage.removeItem(STORAGE_KEY);
     }
   }, []);
+
+  useEffect(() => {
+    const onSessionUnauthorized = () => {
+      logout();
+      if (pathname !== '/login') {
+        router.replace('/login');
+      }
+    };
+    window.addEventListener(FARMHOUSE_SESSION_UNAUTHORIZED, onSessionUnauthorized);
+    return () => window.removeEventListener(FARMHOUSE_SESSION_UNAUTHORIZED, onSessionUnauthorized);
+  }, [logout, router, pathname]);
 
   const updateProfile = useCallback(
     async (body: { email: string; password?: string }) => {

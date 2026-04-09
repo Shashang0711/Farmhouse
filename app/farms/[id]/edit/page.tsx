@@ -1,14 +1,18 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Trash2 } from 'lucide-react';
+import { Trash2, X } from 'lucide-react';
 import { errorMessageFromUnknown } from '../../../lib/api-errors';
 import { useAuth } from '../../../lib/auth-context';
 import { apiGet, apiPatch } from '../../../lib/backend-api';
+import { uploadAdminImageFile } from '../../../lib/admin-image-upload';
+import { collectEditFarmFieldErrors, type FarmFormStrings } from '../../../lib/farm-validation';
 import { parseStoredAmenity, type AmenityItem } from '../../../lib/amenities';
 import { IconPicker } from '../../../components/IconPicker';
 import { AmenityLucideIcon } from '../../../components/AmenityLucideIcon';
+import { FileUploadControl } from '../../../components/FileUploadControl';
+import { mediaSrc } from '../../../lib/media-url';
 import { HeaderLink, PageIntro, SectionCard } from '../../../ui/admin-ui';
 
 type FarmDetail = {
@@ -32,11 +36,12 @@ type FarmDetail = {
   discount?: string;
   weekdayPrice?: string;
   weekendPrice?: string;
+  thumbnailUrl?: string | null;
 };
 
 type FieldErrors = Record<string, string | undefined>;
 
-export default function EditFarmPage({ params }: { params: { id: string } }) {
+export default function EditFarmPage({ params }: { params: { slug: string } }) {
   const router = useRouter();
   const { user, token, loading } = useAuth();
 
@@ -64,6 +69,19 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
   const [contactEmail, setContactEmail] = useState('');
   const [discount, setDiscount] = useState('');
   const [isPopular, setIsPopular] = useState(false);
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState<string | null>(null);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+
+  const thumbnailPreviewUrl = useMemo(
+    () => (thumbnailFile ? URL.createObjectURL(thumbnailFile) : null),
+    [thumbnailFile],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
+    };
+  }, [thumbnailPreviewUrl]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -82,7 +100,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
       if (!token) return;
       setLoadingFarm(true);
       try {
-        const data = await apiGet<FarmDetail>(`/farms/${params.id}`, token);
+        const data = await apiGet<FarmDetail>(`/farms/${params.slug}`, token);
         setName(data.name ?? '');
         setLocation(data.location ?? '');
         setDescription(data.description ?? '');
@@ -102,6 +120,8 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
         setContactEmail(data.contactEmail ?? '');
         setDiscount(data.discount ?? '');
         setIsPopular(Boolean(data.isPopular));
+        setExistingThumbnailUrl(data.thumbnailUrl ?? null);
+        setThumbnailFile(null);
       } catch (err: any) {
         setFormError(errorMessageFromUnknown(err, 'Failed to load farm'));
       } finally {
@@ -109,27 +129,31 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
       }
     };
     void load();
-  }, [token, params.id]);
+  }, [token, params.slug]);
 
   if (!user || user.role !== 'ADMIN') return null;
 
   const validate = () => {
-    const errs: FieldErrors = {};
-    if (!name.trim()) errs.name = 'Name is required.';
-    if (!location.trim()) errs.location = 'Location is required.';
-    if (!description.trim()) errs.description = 'Description is required.';
-    if (!price.trim()) errs.price = 'Display price is required.';
-    if (!originalPrice.trim()) errs.originalPrice = 'Original price is required.';
-    if (!capacity.trim()) errs.capacity = 'Capacity is required.';
-    if (!featuresText.trim()) errs.featuresText = 'At least one feature is required.';
-    if (!amenities.some((a) => a.name.trim()))
-      errs.amenities = 'At least one amenity with a name is required.';
-    if (!facilitiesText.trim()) errs.facilitiesText = 'Facilities are required.';
-    if (!rulesText.trim()) errs.rulesText = 'Rules are required.';
-    if (!weekdayPrice.trim()) errs.weekdayPrice = 'Weekday 24h price is required.';
-    if (!weekendPrice.trim()) errs.weekendPrice = 'Weekend 24h price is required.';
-    if (!contactPhone.trim()) errs.contactPhone = 'Contact phone is required.';
-    if (!contactEmail.trim()) errs.contactEmail = 'Contact email is required.';
+    const form: FarmFormStrings = {
+      name,
+      location,
+      description,
+      price,
+      originalPrice,
+      rating,
+      reviews,
+      capacity,
+      featuresText,
+      amenities,
+      facilitiesText,
+      rulesText,
+      weekdayPrice,
+      weekendPrice,
+      contactPhone,
+      contactEmail,
+      discount,
+    };
+    const errs = collectEditFarmFieldErrors(form);
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -146,6 +170,17 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
 
     setSubmitting(true);
     try {
+      let thumbnailImageUrl: string | undefined;
+      if (thumbnailFile) {
+        try {
+          thumbnailImageUrl = await uploadAdminImageFile(token, thumbnailFile, 'farms');
+        } catch (err: any) {
+          setFormError(errorMessageFromUnknown(err, 'Failed to upload thumbnail'));
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const features = featuresText
         .split(/[,\\n]/g)
         .map((s) => s.trim())
@@ -170,7 +205,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
             }
           : undefined;
 
-      await apiPatch(`/farms/${params.id}`, token, {
+      await apiPatch(`/farms/${params.slug}`, token, {
         name: name.trim(),
         location: location.trim(),
         description: description.trim(),
@@ -190,6 +225,7 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
         discount: discount.trim() || null,
         weekdayPrice: weekdayPrice.trim(),
         weekendPrice: weekendPrice.trim(),
+        ...(thumbnailImageUrl !== undefined ? { thumbnailImageUrl } : {}),
       });
 
       router.push('/farms');
@@ -287,16 +323,21 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
                 max="5"
                 value={rating}
                 onChange={(e) => setRating(e.target.value)}
+                className={err('rating') ? 'field-error' : ''}
               />
+              {err('rating') && <span className="field-error-text">{err('rating')}</span>}
             </label>
             <label>
               <span className="field-label">Reviews Count</span>
               <input
                 type="number"
                 min="0"
+                step="1"
                 value={reviews}
                 onChange={(e) => setReviews(e.target.value)}
+                className={err('reviews') ? 'field-error' : ''}
               />
+              {err('reviews') && <span className="field-error-text">{err('reviews')}</span>}
             </label>
             <label>
               <span className="field-label">
@@ -457,7 +498,12 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
             </label>
             <label>
               <span className="field-label">Discount Label</span>
-              <input value={discount} onChange={(e) => setDiscount(e.target.value)} />
+              <input
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                className={err('discount') ? 'field-error' : ''}
+              />
+              {err('discount') && <span className="field-error-text">{err('discount')}</span>}
             </label>
             <label className="field-stack field-stack--checkbox">
               <span className="field-label">Popular</span>
@@ -470,6 +516,53 @@ export default function EditFarmPage({ params }: { params: { id: string } }) {
                 <span>Highlight this listing in the customer experience</span>
               </span>
             </label>
+
+            <div className="form-field full-width">
+              <span className="field-label">Thumbnail</span>
+              <p className="field-hint">One image — listing preview. Leave unchanged or pick a new file to replace.</p>
+              {existingThumbnailUrl && !thumbnailPreviewUrl && (
+                <div style={{ marginBottom: '0.65rem' }}>
+                  <p className="field-hint">Current thumbnail</p>
+                  <img
+                    src={mediaSrc(existingThumbnailUrl)}
+                    alt=""
+                    style={{ maxWidth: 220, borderRadius: 8, display: 'block' }}
+                  />
+                </div>
+              )}
+              <FileUploadControl
+                accept="image/*"
+                prompt="Replace thumbnail image"
+                hint="Single image only; choosing a file replaces the stored thumbnail on save."
+                aria-label="Replace farm thumbnail"
+                onFilesPicked={(list) => {
+                  const f = list[0];
+                  if (f?.type.startsWith('image/')) setThumbnailFile(f);
+                }}
+              />
+              {thumbnailPreviewUrl && thumbnailFile && (
+                <div style={{ marginTop: '0.65rem' }}>
+                  <p className="field-hint">New thumbnail preview — click × to cancel replacement.</p>
+                  <div className="photo-upload-preview-grid" style={{ maxWidth: 220 }}>
+                    <div className="photo-upload-preview-item">
+                      <button
+                        type="button"
+                        className="photo-upload-preview-remove"
+                        onClick={() => setThumbnailFile(null)}
+                        aria-label="Cancel new thumbnail"
+                      >
+                        <X size={16} strokeWidth={2.5} />
+                      </button>
+                      <img
+                        src={thumbnailPreviewUrl}
+                        alt=""
+                        className="photo-upload-preview-img"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="full-width farm-row-actions">
               <button type="submit" disabled={submitting}>

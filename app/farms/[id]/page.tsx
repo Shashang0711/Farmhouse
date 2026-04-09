@@ -34,10 +34,11 @@ type FarmDetail = {
   discount?: string;
   weekdayPrice?: string;
   weekendPrice?: string;
+  thumbnailUrl?: string | null;
   images?: FarmImageRow[];
 };
 
-export default function FarmDetailPage({ params }: { params: { id: string } }) {
+export default function FarmDetailPage({ params }: { params: { slug: string } }) {
   const router = useRouter();
   const { user, token, loading } = useAuth();
   const [farm, setFarm] = useState<FarmDetail | null>(null);
@@ -71,14 +72,14 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
       if (!token) return;
       setError(null);
       try {
-        const data = await apiGet<FarmDetail>(`/farms/${params.id}`, token);
+        const data = await apiGet<FarmDetail>(`/farms/${params.slug}`, token);
         setFarm(data);
       } catch (err: any) {
         setError(errorMessageFromUnknown(err, 'Failed to load farm'));
       }
     };
     void load();
-  }, [token, params.id]);
+  }, [token, params.slug]);
 
   if (!user) return null;
 
@@ -102,6 +103,21 @@ export default function FarmDetailPage({ params }: { params: { id: string } }) {
               meta={farm.discount || 'No discount label'}
             />
           </div>
+
+          {farm.thumbnailUrl ? (
+            <SectionCard
+              title="Thumbnail"
+              description="Primary preview image for this listing."
+            >
+              <img
+                src={mediaSrc(farm.thumbnailUrl)}
+                alt=""
+                style={{ maxWidth: 320, width: '100%', height: 'auto', borderRadius: 12, display: 'block' }}
+                loading="eager"
+                decoding="async"
+              />
+            </SectionCard>
+          ) : null}
 
           <SectionCard
             title="Photos"

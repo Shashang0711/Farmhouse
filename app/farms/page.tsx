@@ -4,17 +4,19 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../lib/auth-context';
-import { apiGet } from '../lib/backend-api';
-import { errorMessageFromUnknown, parseApiErrorMessage } from '../lib/api-errors';
+import { apiDelete, apiGet } from '../lib/backend-api';
+import { errorMessageFromUnknown } from '../lib/api-errors';
 import { isTruncatedInList, truncateForList } from '../lib/text';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
 import ConfirmDialog from '../ components/ConfirmDialog';
+import { mediaSrc } from '../lib/media-url';
 import { HeaderLink, PageIntro, SectionCard } from '../ui/admin-ui';
 
 type Farm = {
   id: string;
   name: string;
   slug?: string | null;
+  thumbnailUrl?: string | null;
   location?: string;
   description?: string;
   price?: string;
@@ -35,7 +37,7 @@ export default function FarmsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalMatching, setTotalMatching] = useState<number | null>(null);
   const [rowDeletingId, setRowDeletingId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [confirmDeleteSlug, setConfirmDeleteSlug] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -70,29 +72,19 @@ export default function FarmsPage() {
   };
 
   const deleteFarm = async () => {
-    if (!token || !confirmDeleteId) return;
+    if (!token || !confirmDeleteSlug) return;
 
-    setRowDeletingId(confirmDeleteId);
+    setRowDeletingId(confirmDeleteSlug);
     setError(null);
 
     try {
-      const res = await fetch(`/api/farms/${confirmDeleteId}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error(parseApiErrorMessage(await res.text(), 'Failed to delete farm'));
-      }
-
+      await apiDelete(`/farms/${confirmDeleteSlug}`, token);
       await loadFarms();
     } catch (err: any) {
       setError(errorMessageFromUnknown(err, 'Failed to delete farm'));
     } finally {
       setRowDeletingId(null);
-      setConfirmDeleteId(null);
+      setConfirmDeleteSlug(null);
     }
   };
 
@@ -147,6 +139,7 @@ export default function FarmsPage() {
           <table>
             <thead>
               <tr>
+                <th aria-label="Thumbnail" />
                 <th>Name</th>
                 <th>Slug</th>
                 <th>Location</th>
@@ -162,13 +155,30 @@ export default function FarmsPage() {
             <tbody>
               {farms.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="empty-state">
+                  <td colSpan={10} className="empty-state">
                     No farms found.
                   </td>
                 </tr>
               ) : (
                 farms.map((farm) => (
                   <tr key={farm.id}>
+                    <td className="cell-thumb">
+                      {farm.thumbnailUrl ? (
+                        <img
+                          src={mediaSrc(farm.thumbnailUrl)}
+                          alt=""
+                          width={44}
+                          height={44}
+                          style={{
+                            objectFit: 'cover',
+                            borderRadius: 8,
+                            display: 'block',
+                          }}
+                        />
+                      ) : (
+                        <span className="cell-subtle">—</span>
+                      )}
+                    </td>
                     <td className="cell-title">{farm.name}</td>
                     <td className="cell-slug">{farm.slug?.trim() || '—'}</td>
                     <td>{farm.location || '—'}</td>
@@ -224,7 +234,7 @@ export default function FarmsPage() {
                               className="table-action-btn table-action-btn--danger"
                               title="Delete"
                               aria-label="Delete"
-                              onClick={() => setConfirmDeleteId(farm.id)}
+                                onClick={() => setConfirmDeleteSlug(farm.slug ?? null)}
                             >
                               <Trash2 size={16} strokeWidth={2.25} />
                             </button>
@@ -261,13 +271,13 @@ export default function FarmsPage() {
       </SectionCard>
 
       <ConfirmDialog
-        open={!!confirmDeleteId}
+        open={!!confirmDeleteSlug}
         title="Delete Farm"
         description="Are you sure you want to delete this farm? This will also delete related photos and decorations."
         confirmText="Delete"
-        loading={rowDeletingId === confirmDeleteId}
+        loading={rowDeletingId === confirmDeleteSlug}
         onConfirm={deleteFarm}
-        onCancel={() => setConfirmDeleteId(null)}
+        onCancel={() => setConfirmDeleteSlug(null)}
       />
     </div>
   );

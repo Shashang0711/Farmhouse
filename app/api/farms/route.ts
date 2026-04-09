@@ -3,6 +3,7 @@ import { prisma } from '@/prisma/client';
 import { Role } from '@prisma/client';
 import { requireAuth, requireRole } from '../_lib/auth';
 import { normalizeAmenitiesForStorage, type AmenityPayload } from '@/app/lib/amenities';
+import { validateFarmCreatePayload } from '@/app/lib/farm-validation';
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
       discount?: string | null;
       weekdayPrice?: string | null;
       weekendPrice?: string | null;
+      thumbnailImageUrl?: string | null;
       photoImageUrls?: string[];
     }[];
   };
@@ -116,15 +118,17 @@ export async function POST(req: NextRequest) {
       const results = [];
       for (const f of body.farms!) {
         const name = (f.name ?? '').trim();
-        if (!name) continue;
+        const payloadErr = validateFarmCreatePayload(f);
+        if (payloadErr) {
+          throw new Error(payloadErr);
+        }
 
         const photoUrls = (Array.isArray(f.photoImageUrls) ? f.photoImageUrls : [])
           .map((u) => (typeof u === 'string' ? u.trim() : ''))
           .filter(Boolean);
 
-        if (photoUrls.length < 10) {
-          throw new Error(`Farm "${name}" requires at least 10 photos.`);
-        }
+        const thumbnailUrl =
+          typeof f.thumbnailImageUrl === 'string' ? f.thumbnailImageUrl.trim() : '';
 
         const nextSlug = `HW${++currentMaxSlugNumber}`;
 
@@ -132,6 +136,7 @@ export async function POST(req: NextRequest) {
           data: {
             slug: nextSlug,
             name,
+            thumbnailUrl,
             location: f.location ?? undefined,
             description: f.description ?? undefined,
             ownerId,
